@@ -1,0 +1,7 @@
+path: /Users/komiljon/research/data/detector
+train: images/train
+val: images/val
+test: images/test
+
+nc: 2
+names: ['module', 'busbar']

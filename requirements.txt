@@ -1,0 +1,38 @@
+# requirements.txt
+# EV Battery CV Pipeline
+# Exact versions from paper Appendix I, Table I1 where available.
+# Install with: pip install -r requirements.txt
+
+# ── core ML ───────────────────────────────────────────────────────────────────
+torch==2.11.0
+torchvision==0.26.0
+
+# ── YOLO detector ─────────────────────────────────────────────────────────────
+ultralytics==8.4.38
+
+# ── vision / image processing ─────────────────────────────────────────────────
+opencv-python==4.13.0
+Pillow==12.0.0
+
+# ── data / evaluation ─────────────────────────────────────────────────────────
+numpy==2.3.5
+pandas==2.3.3
+scikit-learn==1.7.2
+matplotlib==3.10.6
+
+# ── utilities ─────────────────────────────────────────────────────────────────
+tqdm==4.67.1
+PyYAML==6.0.3
+
+# ── Grad-CAM (Appendix F visualisations) ─────────────────────────────────────
+grad-cam
+
+# ── dataset download ──────────────────────────────────────────────────────────
+roboflow
+
+# ── notebooks ─────────────────────────────────────────────────────────────────
+jupyter
+ipykernel
+
+# ── augmentation (optional — used internally, albumentations for extras) ──────
+albumentations
