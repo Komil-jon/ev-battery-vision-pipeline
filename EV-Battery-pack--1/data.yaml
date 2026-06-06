@@ -1,0 +1,18 @@
+names:
+- Aluminum-frame
+- Battery Module
+- Bolt
+- Bus-bar
+- Cable
+- Nut
+- Screw
+nc: 7
+roboflow:
+  license: CC BY 4.0
+  project: ev-battery-pack
+  url: https://universe.roboflow.com/mtech-project-ohj8a/ev-battery-pack/dataset/1
+  version: 1
+  workspace: mtech-project-ohj8a
+test: ../test/images
+train: ../train/images
+val: ../valid/images
