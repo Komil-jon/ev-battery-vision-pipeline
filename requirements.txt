@@ -1,6 +1,6 @@
 # requirements.txt
 # EV Battery CV Pipeline
-# Exact versions from paper Appendix I, Table I1 where available.
+# Exact versions from paper Appendix E, Table E.1 where available.
 # Install with: pip install -r requirements.txt
 
 # ── core ML ───────────────────────────────────────────────────────────────────
@@ -24,7 +24,7 @@ matplotlib==3.10.6
 tqdm==4.67.1
 PyYAML==6.0.3
 
-# ── Grad-CAM (Appendix F visualisations) ─────────────────────────────────────
+# ── Grad-CAM (Appendix K visualisations) ─────────────────────────────────────
 grad-cam
 
 # ── dataset download ──────────────────────────────────────────────────────────

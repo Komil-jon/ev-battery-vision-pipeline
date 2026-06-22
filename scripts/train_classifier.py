@@ -106,7 +106,19 @@ def train(args):
 
     optimizer = torch.optim.Adam(model.fc.parameters(), lr=args.lr)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
-    criterion = nn.CrossEntropyLoss()
+
+    # Class-weighted loss: the bad (damaged) class is the minority and the most
+    # costly to miss (a missed bad module is routed to reuse). Weight inversely
+    # by class frequency so bad-class recall is not sacrificed to majority good.
+    counts = [0, 0]
+    for _, lbl in train_ds.samples:
+        counts[lbl] += 1
+    weights = torch.tensor(
+        [len(train_ds) / (2 * c) if c > 0 else 0.0 for c in counts],
+        dtype=torch.float32,
+    )
+    print(f"Class counts {counts} -> loss weights {weights.tolist()}")
+    criterion = nn.CrossEntropyLoss(weight=weights.to(device))
 
     best_f1    = 0.0
     best_epoch = 0

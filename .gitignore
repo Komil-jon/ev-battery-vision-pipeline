@@ -1,0 +1,26 @@
+# OS / IDE
+.DS_Store
+.idea/
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Conda installer (do not commit large binaries)
+Miniconda3-*.sh
+
+# YOLO / training artefacts
+*.cache
+runs/
+outputs/
+data/classifier/to_sort/
+
+# Local backups created by the maintenance scripts
+.backup/
+
+# Temporary lighting-evaluation workspace
+/tmp/ev_lighting_eval/
