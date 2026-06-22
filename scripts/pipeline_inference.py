@@ -6,13 +6,13 @@ Full two-stage inference pipeline replicating the paper system:
   Stage 2 — ResNet18 classifies each module crop as good/bad
              Bad-class probability → Grade A / B / C triage output
 
-Grade thresholds (paper Section 3.4 & Appendix F, Table F2):
+Grade thresholds (paper Section 3.4 & Appendix K, Table K.2):
   Grade A : p_bad < 0.30  → likely reusable
   Grade B : 0.30 ≤ p_bad < 0.70  → manual review required
   Grade C : p_bad ≥ 0.70  → likely damaged
 
 Confidence threshold:
-  Paper F1-confidence curve peaks at ~0.21 (Appendix C, Figure C2).
+  Paper F1-confidence curve peaks at ~0.21 (Appendix I, Figure I.2).
   Default here is 0.21 — adjust per facility cost-benefit analysis.
 
 Usage:

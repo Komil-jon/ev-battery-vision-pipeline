@@ -85,7 +85,7 @@ def train_stage2():
         lrf          = 0.00001,             # cosine decay to low floor
         weight_decay = 0.0005,
         mosaic       = 0.5,
-        patience     = 8,                   # early stopping
+        patience     = 8,                    # early stopping (paper Table 2 / Appendix E3)
         # ── same safe augments, no hue jitter ──
         hsv_v        = 0.30,
         hsv_s        = 0.25,

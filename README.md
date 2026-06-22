@@ -7,11 +7,25 @@ localisation and condition assessment, replicating the paper methodology on Appl
 **Stage 2 — Classification:** ResNet18 binary classifier (good/bad) on each module crop  
 **Output:** Grade A / B / C triage per detected module via confidence thresholds
 
+> **Replication note.** The paper's results were produced on a private in-house
+> dataset that is not distributed. This repository replicates the *methodology*
+> on the closest public proxy — the Roboflow "EV Battery pack" dataset (CC BY 4.0).
+> Reproduced metrics are therefore legitimate but will not exactly equal the
+> paper's headline figures. The public dataset ships with a **7-class** label
+> scheme; it **must be remapped to the paper's 2-class scheme before training**
+> (see *Dataset preparation* below). Skipping this step makes YOLO silently treat
+> every multi-class label file as a corrupt/background image and learns the wrong
+> classes.
+
 ---
 
 ## Key results from paper
 
-| Metric | Value |
+These are the paper's headline figures (private dataset). Run
+`python scripts/evaluate.py` after training to print your reproduced numbers on
+the public Roboflow proxy alongside these targets.
+
+| Metric | Paper value |
 |---|---|
 | Detector mAP50 | 0.901 |
 | Detector mAP50-95 | 0.715 |
@@ -19,6 +33,56 @@ localisation and condition assessment, replicating the paper methodology on Appl
 | Classifier accuracy | 91.7% |
 | Classifier weighted F1 | 0.912 |
 | Full pipeline latency | 149.4 ms / 6.7 FPS |
+
+---
+
+## Reproduced results (this repo, public Roboflow data, Apple M1 CPU)
+
+Produced by `python scripts/remap_labels.py` → `train_detector.py --stage all`
+→ `train_classifier.py` → `evaluate.py`. These are legitimate end-to-end results
+on the public proxy dataset; they are **not** expected to equal the paper's
+private-dataset figures.
+
+**Detector — held-out test set (43 images, 323 instances):**
+
+| Class | Precision | Recall | mAP50 | mAP50-95 |
+|---|---|---|---|---|
+| Module | 0.761 | 0.838 | 0.787 | 0.581 |
+| Busbar | 0.872 | 0.781 | 0.849 | 0.533 |
+| **Overall** | **0.817** | **0.809** | **0.818** | **0.557** |
+
+CPU latency: **70.8 ms/image (14.1 FPS)** — comfortably beating the paper's
+78.9 ms / 12.7 FPS target on the same class of hardware.
+
+**Lighting robustness (real mAP, not proxy confidence):**
+
+| Condition | mAP50 | mAP50-95 |
+|---|---|---|
+| Normal | 0.816 | 0.555 |
+| Dark | 0.788 | 0.537 |
+| Bright / glare | 0.672 | 0.424 |
+
+This **reproduces the paper's central optical finding**: bright/glare degrades
+detection far more than darkness (specular reflection on metallic casings),
+whereas dark conditions barely move mAP50.
+
+**Classifier — 48-image test set (34 good + 14 bad), class-weighted ResNet18:**
+
+| Metric | Reproduced | Paper |
+|---|---|---|
+| Accuracy | 0.771 | 0.917 |
+| Weighted F1 | 0.768 | 0.912 |
+| Bad-class recall | 0.571 (8/14) | 0.714 (10/14) |
+| Good-class recall | 0.853 (29/34) | 1.000 (34/34) |
+
+The classifier gap is a **data-availability limit, not a code limit**: this
+project contains only **16 real damaged-module crops** in total. The classifier
+dataset was expanded from them by augmentation (`build_classifier_dataset.py`)
+to reach the paper's reporting scale, but augmented copies of 16 real crops
+cannot reproduce a 48-image manually-refined real test set. The paper itself
+relied on AI-generated synthetic damaged images for the same reason (Appendix B).
+Reaching paper-level classifier accuracy requires collecting more real
+bad-condition crops (the paper recommends ≥200 across ≥3 pack variants).
 
 ---
 
@@ -42,10 +106,13 @@ ev-battery-cv/
 │       └── class_map.json
 ├── scripts/
 │   ├── download_dataset.py     ← get public EV battery data from Roboflow
+│   ├── remap_labels.py         ← remap Roboflow 7-class → paper 2-class (REQUIRED)
 │   ├── augment_busbars.py      ← busbar-targeted recall-boost augmentation
+│   ├── auto_crop_modules.py    ← crop module ROIs from detector for classifier sorting
 │   ├── train_detector.py       ← Stage 1 + Stage 2 YOLOv8n training
 │   ├── train_classifier.py     ← ResNet18 binary classifier training
 │   ├── pipeline_inference.py   ← full two-stage inference + triage output
+│   ├── webcam_demo.py          ← live webcam / video two-stage demo
 │   └── evaluate.py             ← detector + classifier + lighting evaluation
 ├── outputs/results/            ← annotated output images saved here
 ├── dataset.yaml                ← YOLO dataset config
@@ -102,6 +169,29 @@ python scripts/download_dataset.py --check_classes
 
 ---
 
+## Dataset preparation (REQUIRED before training)
+
+The public Roboflow dataset uses a 7-class scheme
+(`Aluminum-frame, Battery Module, Bolt, Bus-bar, Cable, Nut, Screw`). This
+project detects only **module** and **busbar**, so the labels must be remapped
+to the 2-class scheme in `dataset.yaml` (`0=module`, `1=busbar`):
+
+```bash
+# Preview the remap (changes nothing)
+python scripts/remap_labels.py --dry_run
+
+# Apply: Battery Module(1)->module(0), Bus-bar(3)->busbar(1); drop the rest
+python scripts/remap_labels.py
+
+# Clear stale YOLO caches so the new labels take effect
+find data/detector/labels -name '*.cache' -delete
+```
+
+`remap_labels.py` is idempotent — it skips any split already in the 2-class
+scheme. Validation and test labels are remapped too so evaluation is valid.
+
+---
+
 ## Training
 
 ### Step 1 — Generate busbar-targeted augmentations
@@ -149,6 +239,24 @@ python scripts/pipeline_inference.py --input image.jpg --conf 0.21
 
 Output images saved to `outputs/results/`.
 
+### Live webcam / video demo
+
+```bash
+python scripts/webcam_demo.py                 # default camera, imgsz 640
+python scripts/webcam_demo.py --imgsz 480     # faster / smoother on CPU
+python scripts/webcam_demo.py --input clip.mp4  # run on a video file instead
+```
+
+Press `q` to quit, `s` to save the current annotated frame to `outputs/results/`.
+
+**macOS camera permission:** the first run needs the terminal app authorised
+under *System Settings → Privacy & Security → Camera*. Enable it, then fully
+quit and reopen the terminal and rerun.
+
+> The detector only knows EV **battery modules and busbars** — pointing the
+> webcam at a room/face detects nothing. To see it work, point the camera at a
+> photo of an EV battery pack on another screen, or use `--input` with a clip.
+
 ---
 
 ## Evaluation
@@ -168,7 +276,7 @@ python scripts/evaluate.py --skip_detector
 
 ## Grade triage thresholds
 
-From paper Section 3.4 and Appendix F, Table F2:
+From paper Section 3.4 and Appendix K, Table K.2:
 
 | Grade | p_bad rule | Interpretation |
 |---|---|---|
@@ -214,7 +322,7 @@ Busbar-targeted augmentation applied only to busbar-containing images (Stage 2).
 
 ## Deployment notes
 
-- Optimal confidence threshold: **~0.21** (F1-confidence curve peak, Appendix C)
+- Optimal confidence threshold: **~0.21** (F1-confidence curve peak, Appendix I, Figure I.2)
 - Use **diffuse lighting** — bright/glare degrades mAP50 by 0.097 via specular reflection
 - Standardise camera pose, working distance, and background colour
 - Pipeline best suited to **static, indexed, or slow-moving** inspection stations

@@ -16,11 +16,13 @@ Usage:
 
 import argparse
 import json
+import shutil
 import time
 from pathlib import Path
 
 import cv2
 import numpy as np
+import yaml
 import torch
 import torch.nn as nn
 from PIL import Image, ImageEnhance
@@ -39,6 +41,7 @@ DETECTOR_WEIGHTS   = ROOT / "models" / "detector" / "stage2_recall_boost" / "wei
 CLASSIFIER_WEIGHTS = ROOT / "models" / "classifier" / "resnet18_binary.pth"
 CLASS_MAP_PATH     = ROOT / "models" / "classifier" / "class_map.json"
 TEST_IMGS          = ROOT / "data" / "detector" / "images" / "test"
+TEST_LABS          = ROOT / "data" / "detector" / "labels" / "test"
 CLASSIFIER_TEST    = ROOT / "data" / "classifier" / "test"
 
 
@@ -127,6 +130,12 @@ def evaluate_detector(detector: YOLO, args):
         print(f"  FPS          : {1000 / mean_ms:.1f}")
         print(f"  Paper target : 78.9 ms / 12.7 FPS")
 
+    # Per-class recall (module = class index 0) for the propagation analysis
+    try:
+        return float(metrics.box.r[0])
+    except Exception:
+        return None
+
 
 # ── 2. Classifier evaluation ───────────────────────────────────────────────────
 
@@ -165,14 +174,53 @@ def evaluate_classifier():
     cm = confusion_matrix(all_labels, all_preds)
     print(cm)
 
+    bad_recall = None
     if bad_idx in all_labels:
         bad_recall = sum(
             1 for p, l in zip(all_preds, all_labels) if l == bad_idx and p == bad_idx
         ) / all_labels.count(bad_idx)
         print(f"\n  Bad-class recall : {bad_recall:.3f}  (paper: 0.714)")
+    return bad_recall
 
 
 # ── 3. Lighting robustness ─────────────────────────────────────────────────────
+
+def _build_lit_split(condition: str, work_root: Path) -> Path | None:
+    """
+    Create a temporary YOLO dataset whose test images have `condition` lighting
+    applied, with the original ground-truth labels copied across. Returns the
+    path to a dataset.yaml usable by detector.val(), or None if no images.
+    """
+    test_images = list(TEST_IMGS.glob("*.jpg")) + list(TEST_IMGS.glob("*.png"))
+    if not test_images:
+        return None
+
+    img_out = work_root / condition / "images" / "test"
+    lab_out = work_root / condition / "labels" / "test"
+    img_out.mkdir(parents=True, exist_ok=True)
+    lab_out.mkdir(parents=True, exist_ok=True)
+
+    for img_path in test_images:
+        img = cv2.imread(str(img_path))
+        if img is None:
+            continue
+        cv2.imwrite(str(img_out / img_path.name), apply_brightness(img, condition))
+        lab_src = TEST_LABS / (img_path.stem + ".txt")
+        if lab_src.exists():
+            shutil.copy(lab_src, lab_out / lab_src.name)
+
+    yaml_path = work_root / condition / "dataset.yaml"
+    with open(yaml_path, "w") as f:
+        yaml.safe_dump({
+            "path":  str(work_root / condition),
+            "train": "images/test",   # unused by val, required key
+            "val":   "images/test",
+            "test":  "images/test",
+            "nc":    2,
+            "names": ["module", "busbar"],
+        }, f)
+    return yaml_path
+
 
 def evaluate_lighting(detector: YOLO):
     print("\n" + "=" * 60)
@@ -184,48 +232,38 @@ def evaluate_lighting(detector: YOLO):
         print(f"  No test images found in {TEST_IMGS} — skipping.")
         return
 
-    conditions = ["normal", "dark", "bright"]
-    for condition in conditions:
-        print(f"\n  Condition: {condition.upper()}")
-        maps50, maps5095 = [], []
+    work_root = Path("/tmp") / "ev_lighting_eval"
+    if work_root.exists():
+        shutil.rmtree(work_root)
 
-        for img_path in test_images:
-            img = cv2.imread(str(img_path))
-            if img is None:
-                continue
-            mod_img = apply_brightness(img, condition)
-            # Save temp file for YOLO inference
-            tmp = Path("/tmp") / f"_lit_{img_path.name}"
-            cv2.imwrite(str(tmp), mod_img)
-            r = detector(str(tmp), imgsz=768, device="cpu", verbose=False)
-            tmp.unlink(missing_ok=True)
+    paper_ref = {"normal": (0.901, 0.715), "dark": (0.893, 0.675), "bright": (0.804, 0.578)}
+    print(f"\n  {'Condition':<10} {'mAP50':>8} {'mAP50-95':>10}   {'paper mAP50/95':>16}")
+    print(f"  {'-'*10} {'-'*8} {'-'*10}   {'-'*16}")
+    for condition in ["normal", "dark", "bright"]:
+        yaml_path = _build_lit_split(condition, work_root)
+        m = detector.val(data=str(yaml_path), split="test", imgsz=768,
+                         device="cpu", verbose=False)
+        ref = paper_ref[condition]
+        print(f"  {condition.capitalize():<10} {m.box.map50:>8.3f} {m.box.map:>10.3f}"
+              f"   {ref[0]:.3f} / {ref[1]:.3f}")
 
-        # Note: full mAP requires ground-truth labels.
-        # For a quick check without GT, we report average detection confidence instead.
-        total_conf = []
-        for img_path in test_images[:10]:      # sample for speed
-            img = cv2.imread(str(img_path))
-            mod_img = apply_brightness(img, condition)
-            tmp = Path("/tmp") / f"_lit_{img_path.name}"
-            cv2.imwrite(str(tmp), mod_img)
-            results = detector(str(tmp), imgsz=768, device="cpu", verbose=False)
-            for r in results:
-                if r.boxes is not None and len(r.boxes):
-                    total_conf.extend(r.boxes.conf.cpu().tolist())
-            tmp.unlink(missing_ok=True)
-
-        avg_conf = np.mean(total_conf) if total_conf else 0.0
-        n_dets   = len(total_conf)
-        print(f"    Avg detection confidence : {avg_conf:.3f}  (over {n_dets} detections, 10 images)")
-        print(f"    Paper reference — Normal: mAP50=0.901 | Dark: 0.893 | Bright: 0.804")
+    shutil.rmtree(work_root, ignore_errors=True)
 
 
 # ── 4. End-to-end propagation table ───────────────────────────────────────────
 
-def print_propagation_table(module_recall: float = 0.953, bad_class_recall: float = 0.714):
-    """Reproduce Table 6 from paper (Section 5.4)."""
+def print_propagation_table(module_recall: float = None, bad_class_recall: float = None):
+    """End-to-end propagation analysis (paper Table 5 / Section 5.4).
+
+    Uses the reproduced module/bad-class recall when available, otherwise the
+    paper's reference values (0.953 / 0.714)."""
+    src = "reproduced" if (module_recall is not None or bad_class_recall is not None) else "paper reference"
+    if module_recall is None:
+        module_recall = 0.953
+    if bad_class_recall is None:
+        bad_class_recall = 0.714
     print("\n" + "=" * 60)
-    print("4. END-TO-END PROPAGATION TABLE  (Table 6 from paper)")
+    print(f"4. END-TO-END PROPAGATION  (paper Table 5 / Section 5.4) [{src} recalls]")
     print("=" * 60)
     n_bad = 100
     detected    = n_bad * module_recall
@@ -259,10 +297,11 @@ def main():
     parser.add_argument("--skip_classifier", action="store_true")
     args = parser.parse_args()
 
+    module_recall = bad_recall = None
     if not args.skip_detector:
         try:
             det = load_detector()
-            evaluate_detector(det, args)
+            module_recall = evaluate_detector(det, args)
             if not args.skip_lighting:
                 evaluate_lighting(det)
         except FileNotFoundError as e:
@@ -270,11 +309,11 @@ def main():
 
     if not args.skip_classifier:
         try:
-            evaluate_classifier()
+            bad_recall = evaluate_classifier()
         except FileNotFoundError as e:
             print(f"\n[SKIP] {e}")
 
-    print_propagation_table()
+    print_propagation_table(module_recall=module_recall, bad_class_recall=bad_recall)
     print("\nEvaluation complete.")
 
 
