@@ -10,6 +10,9 @@ __pycache__/
 .venv/
 venv/
 
+# Claude Code settings
+.claude/
+
 # Conda installer (do not commit large binaries)
 Miniconda3-*.sh
 
@@ -18,6 +21,12 @@ Miniconda3-*.sh
 runs/
 outputs/
 data/classifier/to_sort/
+
+# Raw dataset (download via scripts/download_dataset.py)
+EV-Battery-pack--1/
+data/detector/images/
+data/detector/labels/
+data/classifier/train/
 
 # Local backups created by the maintenance scripts
 .backup/
