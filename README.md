@@ -68,21 +68,29 @@ whereas dark conditions barely move mAP50.
 
 **Classifier — 48-image test set (34 good + 14 bad), class-weighted ResNet18:**
 
-| Metric | Reproduced | Paper |
-|---|---|---|
-| Accuracy | 0.771 | 0.917 |
-| Weighted F1 | 0.768 | 0.912 |
-| Bad-class recall | 0.571 (8/14) | 0.714 (10/14) |
-| Good-class recall | 0.853 (29/34) | 1.000 (34/34) |
+| Metric | Reproduced | + synthetic bad crops | Paper |
+|---|---|---|---|
+| Accuracy | 0.771 | 0.792 | 0.917 |
+| Weighted F1 | 0.768 | 0.800 | 0.912 |
+| Bad-class recall | 0.571 (8/14) | **0.857 (12/14)** | 0.714 (10/14) |
+| Good-class recall | 0.853 (29/34) | 0.765 (26/34) | 1.000 (34/34) |
 
-The classifier gap is a **data-availability limit, not a code limit**: this
-project contains only **16 real damaged-module crops** in total. The classifier
-dataset was expanded from them by augmentation (`build_classifier_dataset.py`)
-to reach the paper's reporting scale, but augmented copies of 16 real crops
-cannot reproduce a 48-image manually-refined real test set. The paper itself
-relied on AI-generated synthetic damaged images for the same reason (Appendix B).
-Reaching paper-level classifier accuracy requires collecting more real
-bad-condition crops (the paper recommends ≥200 across ≥3 pack variants).
+The "+ synthetic bad crops" column is the current shipped model: the bad class was
+expanded from 40 to 80 training crops with procedurally damaged good crops
+(`scripts/synth_damage_overlay.py`, synthetic kept ≤50% of the class; test set
+remains 100% real). Bad-class recall — the safety-critical metric for triage —
+now **exceeds the paper's 0.714**, at the cost of some good-class recall (more
+Grade B/C flags sent to manual review, which is the conservative direction for
+this application).
+
+The remaining classifier gap is a **data-availability limit, not a code limit**:
+this project contains only **16 real damaged-module crops** in total. The paper
+itself relied on AI-generated synthetic damaged images for the same reason
+(Appendix B); the synthetic-crop expansion above applies the same idea. Reaching
+paper-level accuracy requires collecting more real bad-condition crops (the
+paper recommends ≥200 across ≥3 pack variants) — see
+[docs/IMPROVING_ACCURACY.md](docs/IMPROVING_ACCURACY.md) for datasets and the
+diffusion-based generation pipeline.
 
 ---
 
