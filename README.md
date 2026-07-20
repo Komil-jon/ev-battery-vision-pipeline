@@ -331,6 +331,31 @@ Busbar-targeted augmentation applied only to busbar-containing images (Stage 2).
 
 ---
 
+## Improving accuracy & generalization
+
+The two known limits (classifier bad-class scarcity, single-dataset detector) can
+be attacked with external datasets and synthetic data. See
+**[docs/IMPROVING_ACCURACY.md](docs/IMPROVING_ACCURACY.md)** for the curated
+dataset catalogue (incl. a 19-battery-type CC BY 4.0 set) and method guide.
+Starter tooling:
+
+```bash
+# External datasets (Zenodo 19-type set, any Roboflow set) + class-remap merge
+python scripts/download_external_datasets.py --dry_run
+
+# Copy-paste compositing (+ optional synthetic glare) for the detector
+python scripts/synth_copy_paste.py --n_images 300
+python scripts/synth_copy_paste.py --glare --n_images 200
+
+# Procedural damaged-crop synthesis for the classifier (CPU-only fallback)
+python scripts/synth_damage_overlay.py --preview
+
+# Diffusion-inpainting damaged-crop synthesis (free Colab GPU)
+# -> notebooks/colab_defect_inpainting.ipynb
+```
+
+---
+
 ## References
 
 Paper methodology (unpublished dissertation, 2025/2026):
