@@ -83,6 +83,22 @@ Doing 1 + 3 is achievable with current data and CPU/Colab compute; 2 is the
 strongest single answer to the architecture criticism but is gated on
 annotation effort.
 
+## New-method track (accuracy + novelty), status
+
+- **DINOv2 linear probe** — added as `dinov2_vits14` in
+  `benchmark_classifiers.py`. Needs one ~90 MB torch.hub download (wifi), then:
+  `python scripts/benchmark_classifiers.py --models dinov2_vits14`.
+- **Good-only anomaly detection** (`scripts/anomaly_condition.py`,
+  PatchCore-lite): scaffold works end-to-end. With offline ResNet18 features it
+  reaches only AUROC 0.60 — honest negative with ImageNet features; the
+  literature-standard fix is stronger patch features, so re-run with
+  `--backbone dinov2` once online. If DINOv2 lifts AUROC materially, this
+  becomes the paper's novel-method contribution (zero bad examples used).
+- **YouTube frame harvesting** (`scripts/harvest_youtube_frames.py`):
+  downloads explicit URLs (CC-licensed/own footage only), samples + dedups
+  frames, pseudo-labels with the current detector into a review queue.
+  Pseudo-labels must be human-reviewed before entering train/ (never val/test).
+
 ## Suggested order of execution
 
 1. Finish classifier architecture benchmark (running) → paper Table.

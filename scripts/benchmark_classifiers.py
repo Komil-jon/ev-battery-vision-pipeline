@@ -51,8 +51,30 @@ TEST_TRANSFORMS = transforms.Compose([
 ])
 
 
+class DinoV2Probe(nn.Module):
+    """Frozen DINOv2 ViT-S/14 CLS embedding + trainable linear head.
+
+    Foundation-model features are the modern counterpart of the frozen-ImageNet
+    protocol: same training recipe, only the representation changes.
+    """
+
+    def __init__(self, num_classes: int = 2):
+        super().__init__()
+        self.backbone = torch.hub.load("facebookresearch/dinov2", "dinov2_vits14")
+        for p in self.backbone.parameters():
+            p.requires_grad = False
+        self.fc = nn.Linear(self.backbone.embed_dim, num_classes)
+
+    def forward(self, x):
+        with torch.no_grad():
+            feats = self.backbone(x)
+        return self.fc(feats)
+
+
 def build(name: str, num_classes: int = 2) -> nn.Module:
     """Backbone frozen, final head replaced — mirrors train_classifier.build_model."""
+    if name == "dinov2_vits14":
+        return DinoV2Probe(num_classes)
     if name == "resnet18":
         m = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
         head_parent, head_attr, in_f = m, "fc", m.fc.in_features
