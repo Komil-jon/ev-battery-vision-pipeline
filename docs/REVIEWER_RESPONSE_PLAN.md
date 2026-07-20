@@ -11,7 +11,7 @@ synthetic data methods).
 |---|---|---|---|
 | 1 | No methodological novelty — off-the-shelf YOLOv8n + ResNet18 (all 4) | Reframe + add two defensible method contributions: (a) **recall-first synthetic-damage training** (procedural + diffusion damage synthesis with a ≤50% synthetic cap and real-only testing — already lifts bad-recall 0.571→0.857, past the paper's 0.714), (b) **glare-targeted augmentation** attacking the measured bright-light failure mode with a quantified robustness delta. Both are training-strategy contributions with ablations, which is what reviewers said was missing. | (a) done, (b) data ready — needs Stage 2 retrain |
 | 2 | No two-stage vs single-stage justification/ablation (wa5W) | Single-stage 3-class ablation (module-good / module-bad / busbar in one YOLO head). **Blocker:** needs per-box condition labels in the detection annotations; only 16 real bad modules exist. Honest response: run the ablation once per-box condition labels exist (label the ~200-image train set for condition, ~1 day of annotation), and argue the two-stage choice from the cascade analysis already in Table 5/6 meanwhile. | Planned; needs annotation pass |
-| 3 | No lightweight/quantised architecture benchmarking (wa5W, WJw8, 2kuK ×2) | **`scripts/benchmark_classifiers.py`** — ResNet18 vs MobileNetV3-Small vs EfficientNet-B0 vs ShuffleNetV2 under the identical frozen-backbone protocol (accuracy/F1/bad-recall/params/CPU-latency). **`scripts/benchmark_detector_cpu.py`** — PyTorch vs ONNX FP32 vs ONNX INT8: mAP + latency + size. Both produce paper-ready tables. | Classifier table done (below); detector benchmark running |
+| 3 | No lightweight/quantised architecture benchmarking (wa5W, WJw8, 2kuK ×2) | **`scripts/benchmark_classifiers.py`** — ResNet18 vs MobileNetV3-Small vs EfficientNet-B0 vs ShuffleNetV2 under the identical frozen-backbone protocol (accuracy/F1/bad-recall/params/CPU-latency). **`scripts/benchmark_detector_cpu.py`** — PyTorch vs ONNX FP32 vs ONNX INT8: mAP + latency + size. Both produce paper-ready tables. | Done — both tables below |
 | 4 | Cascading errors ignored (wa5W) | Already addressed in paper (Tables 5–6, S-H3). No repo action. | Done (paper) |
 | 5 | Small test sets — 54 images / 14 bad crops (WJw8, 2kuK, cJPP) | Merge external data: Zenodo 19-battery-type set (CC BY 4.0) enlarges both splits; diffusion notebook enlarges the bad pool. Report bootstrap CIs meanwhile (see #7). | Tooling ready (`download_external_datasets.py`, Colab notebook); download pending |
 | 6 | End-to-end bad-module identification weak, recall 0.714 (WJw8, cJPP) | **Bad-recall now 0.857 (12/14)** via synthetic damage training; cost-sensitive threshold at 5:1 miss-cost reaches **0.929** (see `calibrate_classifier.py` output). Re-run end-to-end propagation (Table 6) with the new classifier. | Recall improved; Table 6 refresh pending |
@@ -39,6 +39,19 @@ ResNet18's latency at 1/9th the parameters with better bad-recall. The shipped
 ResNet18 model (separately trained, best-epoch selected, synthetic-augmented
 bad class) reaches wF1 0.800 / bad-recall 0.857 — single-run variance at this
 test-set size is large, hence the bootstrap CIs in `calibrate_classifier.py`.
+
+### Detector CPU deployment benchmark (imgsz=768, median over 20 test images,
+Apple M1 CPU; mAP on the 43-image held-out test split)
+
+| Variant | Size (MB) | Latency (ms) | mAP50 | mAP50-95 |
+|---|---|---|---|---|
+| PyTorch FP32 (shipped) | 6.3 | 56.3 | 0.818 | 0.557 |
+| ONNX FP32 | 12.3 | 61.2 | 0.808 | 0.548 |
+| **ONNX INT8 (dynamic)** | **3.4** | **44.8** | 0.811 | 0.550 |
+
+INT8 quantisation cuts latency 20% and file size 46% for a 0.007 mAP50 cost —
+the quantised-deployment data point reviewers asked for, and it strengthens the
+CPU-deployability claim (44.8 ms ≈ 22 FPS detector-only).
 
 ### Calibration & cost analysis (shipped ResNet18, n=48 real test set)
 
