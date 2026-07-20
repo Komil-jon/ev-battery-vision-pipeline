@@ -93,7 +93,7 @@ detection recall improvements from 0.656→0.908 reported for stableIDG.
   [Awesome-Few-Shot-Defect-Image-Generation](https://github.com/bcmi/Awesome-Few-Shot-Defect-Image-Generation).
 - **Implemented (Colab):** `notebooks/colab_defect_inpainting.ipynb` — runs on a
   free Colab T4. Upload the real bad crops, fine-tune, batch-generate, download a
-  zip of synthetic bad crops into `data/classifier/train/bad_synth/`.
+  zip of synthetic bad crops into `data/classifier/bad_synth/`.
 - Quality control: manually review generated crops; discard implausible ones.
   Keep synthetic fraction ≤50% of the bad class and always evaluate on the
   **real-only** test set.

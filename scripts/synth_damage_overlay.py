@@ -13,7 +13,7 @@ This is the zero-setup fallback to the diffusion-inpainting notebook
 CutPaste literature shows even crude synthetic damage teaches useful decision
 boundaries. See docs/IMPROVING_ACCURACY.md section B.3.
 
-Outputs go to data/classifier/train/bad_synth/ — a SEPARATE folder so the real
+Outputs go to data/classifier/bad_synth/ — a SEPARATE folder so the real
 and synthetic bad pools never mix silently. To train with them, copy into
 data/classifier/train/bad/ (keep synthetic ≤50% of the class) and always
 evaluate on the real-only test set.
@@ -33,7 +33,9 @@ import numpy as np
 
 ROOT     = Path(__file__).resolve().parent.parent
 GOOD_DIR = ROOT / "data" / "classifier" / "train" / "good"
-OUT_DIR  = ROOT / "data" / "classifier" / "train" / "bad_synth"
+# Deliberately OUTSIDE train/ — ImageFolder(train/) must only ever see good/ and
+# bad/, otherwise a third folder becomes a third class.
+OUT_DIR  = ROOT / "data" / "classifier" / "bad_synth"
 
 CORROSION_COLORS = [  # BGR: white oxide, verdigris green, pale blue sulfate
     (230, 235, 235), (140, 200, 150), (200, 180, 140),
