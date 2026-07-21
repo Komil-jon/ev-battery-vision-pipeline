@@ -11,6 +11,22 @@ and the measured result where relevant. Maintained across work sessions.
 
 ## 2026-07-21
 
+### NEGATIVE: auto-labeled defect crops hurt the classifier (scale mismatch)
+- Built `scripts/build_classifier_from_defects.py`: auto-labels good/bad module
+  crops by combining detector module boxes with a defect dataset's damage boxes
+  (module containing damage = bad). Both classes drawn from the same source
+  images to avoid dataset-style leakage.
+- Applied to uerymnd/ue_d1_defect_detection (237 imgs). Finding: it is **macro
+  close-up defect photography** (corroded nuts, scratches), not module-level
+  views — the detector found no module in 229/237 images, so it fell back to
+  damage patches (1,076 bad) + clean same-image patches (415 good).
+- Empirical test (merge 150/class, retrain, real-only test set): **bad-recall
+  crashed 0.857 → 0.36**, wF1 0.800 → 0.726. The patch-level data is a scale
+  mismatch with the module-level classifier and confuses it.
+- **Reverted**; classifier stays at the 0.857-bad-recall procedural-synth model.
+  The auto-labeler tool is kept (works for a properly module-level defect source
+  if one appears). Honest negative, documented like the detector-augmentation one.
+
 ### Quality pass — full-dataset perceptual dedup (0 cross-source duplicates)
 - Ran a comprehensive dHash dedup across all 4,440 train images: removed 15
   same-source augmentation near-dups (MTech 3, edfw3 12). Then a cross-source
