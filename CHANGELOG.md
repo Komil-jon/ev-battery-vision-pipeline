@@ -11,6 +11,27 @@ and the measured result where relevant. Maintained across work sessions.
 
 ## 2026-07-21
 
+### Cross-variant generalization result (positive)
+- Ran `scripts/eval_cross_variant.py` on the Zenodo 17 unseen pack types with the
+  baseline detector. **Mean detection rate 0.76; busbar found in 16/17 variants.**
+- Strong on BMW i4 (1.00), Hyundai Ioniq (1.00), Ford Mondeo (0.95); weak on
+  Volvo truck (0.27) and Mercedes GLE (0.40). Module geometry transfers to unseen
+  packs; busbar + a few unusual geometries are the weak axis.
+- Honest generalization evidence answering the single-facility criticism
+  (detection-rate proxy — Zenodo is unlabelled, so not mAP).
+
+### Roboflow ev-battery-iceh6 — not usable
+- Downloaded (machine-iimx4/ev-battery-iceh6, 1,302 train images) but its 9
+  classes are named '0'-'8' with no semantics → cannot safely remap to
+  module/busbar. Discarded. Getting clean labelled module/busbar data from
+  Roboflow is harder than hoped (datasets either overlap MTech or are unnamed).
+
+### YOLOv8n vs YOLO11n architecture comparison (running)
+- `scripts/benchmark_detector_arch.py`: trains both from COCO weights with an
+  identical reduced 40-epoch budget on the clean 1,759-image set, compares
+  test mAP / latency / params. YOLO11n is smaller (2.62M vs 3.16M params).
+  Answers the "no architecture comparison" criticism. Result pending.
+
 ### Programmable inference API (`scripts/inference_api.py`)
 - `BatteryInspector` class: image in (file path / numpy array / raw bytes) →
   structured dict out. Each detection gives class, confidence, `box_xyxy`,
