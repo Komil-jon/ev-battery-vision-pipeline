@@ -11,6 +11,15 @@ and the measured result where relevant. Maintained across work sessions.
 
 ## 2026-07-21
 
+### Quality pass — full-dataset perceptual dedup (0 cross-source duplicates)
+- Ran a comprehensive dHash dedup across all 4,440 train images: removed 15
+  same-source augmentation near-dups (MTech 3, edfw3 12). Then a cross-source
+  pass at a looser threshold found **0 cross-source duplicates** — confirming the
+  ~9 datasets are genuinely independent (no superset/subset overlap; the
+  ybmvt↔gqljq overlap was already caught at merge time).
+- **Final clean train: 4,425 images** (module 14,530 / busbar 4,992), 0 test-set
+  leakage. Dataset quality verified.
+
 ### Major data expansion via Shiv's link doc — train 1,759 → 4,440 (deduped)
 - Enumerated 10 Roboflow workspaces (~50 projects) from
   Roboflow_EV_Battery_Related_Links.docx via the API; identified all projects
