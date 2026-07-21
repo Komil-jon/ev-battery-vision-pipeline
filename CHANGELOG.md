@@ -11,6 +11,29 @@ and the measured result where relevant. Maintained across work sessions.
 
 ## 2026-07-21
 
+### First REAL new labeled data since the paper (+1,332 train images)
+- Downloaded 3 user-provided Roboflow datasets via API. Two are genuinely new
+  with named module/busbar classes and independent images (0 exact duplicates
+  vs our test set):
+  - **ev-battery-component-detection-gqljq** (1,045 imgs, "Arrival-Van" frames;
+    battery_module + Busbars; licence BY-NC-SA 4.0 — non-commercial).
+  - **ev-battery-components-edfw3** (680 imgs; battery_module + busbar; CC BY 4.0).
+  - (ev-battery-pack-62ig0 = duplicate of the MTech source, skipped.)
+- Remapped to the 2-class scheme and merged into training:
+  **train 1,759 → 3,091 images**; busbar instances 3,621 → 4,325 (+704 real),
+  module 10,367 → 12,848 (+2,481). Val 43 → 292 (external valid splits); the
+  43-image real TEST split is untouched.
+- Licence note: gqljq is BY-NC-SA 4.0, so the combined training set carries a
+  non-commercial restriction — fine for academic use, must be disclosed.
+- Next: retrain detector on the enriched real data (unlike the failed synthetic
+  augmentation, this is genuine added diversity).
+
+### Two dataset-request emails sent (user-reviewed)
+- Komiljon sent (after review) polite academic data-request emails to Anselmo
+  Parnada (Birmingham disassembly group) and Ville Pitkäkangas (Zenodo/RECIRCULATE,
+  Centria). A third (Sci. Reports lithium-defect dataset, sundaozong@scau.edu.cn)
+  is prepared. Awaiting replies.
+
 ### Cross-variant generalization result (positive)
 - Ran `scripts/eval_cross_variant.py` on the Zenodo 17 unseen pack types with the
   baseline detector. **Mean detection rate 0.76; busbar found in 16/17 variants.**
