@@ -21,6 +21,22 @@ and the measured result where relevant. Maintained across work sessions.
   and per-module Grade A/B/C. Confirms the pipeline outputs 2D image-plane pixel
   boxes (not real-world 3D coords — that needs camera calibration + depth).
 
+### NEGATIVE RESULT: copy-paste + glare augmentation hurts the detector
+- Reran Stage 2 correctly on the true 2,260-image augmented set (via
+  `dataset_aug.yaml` → worktree data). Validation mAP50 **collapsed** and kept
+  declining: epochs 1-6 gave 0.503 → 0.404 → 0.275 → 0.34 → 0.313 → 0.27, far
+  below the 0.818 baseline and trending down, not recovering.
+- **Decision: stopped at epoch 7 and restored the committed baseline weights.**
+  The synthetic copy-paste + glare augmentation, as implemented, degrades the
+  detector rather than improving it — likely label noise from pasted objects
+  and over-aggressive glare making training signal unnatural.
+- Baseline detector (mAP50 0.818) remains the shipped model. `dataset.yaml`
+  restored; temporary `dataset_aug.yaml` removed.
+- Takeaway for the paper: report this as an honest ablation — naive
+  copy-paste/glare synthesis does not help this detector. If revisited, try
+  (a) much smaller synthetic fraction, (b) blending/quality filtering of pastes,
+  (c) glare intensity tuned to match the real bright-condition statistics.
+
 ### CORRECTION: first augmentation retrain was invalid (config path bug)
 - The initial Stage 2 retrain read `dataset.yaml`, which hardcodes an absolute
   `path:` to the **main repo** (`/Users/komiljon/research/data/detector`), while
