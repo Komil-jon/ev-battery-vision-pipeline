@@ -11,6 +11,25 @@ and the measured result where relevant. Maintained across work sessions.
 
 ## 2026-07-21
 
+### Major data expansion via Shiv's link doc — train 1,759 → 4,440 (deduped)
+- Enumerated 10 Roboflow workspaces (~50 projects) from
+  Roboflow_EV_Battery_Related_Links.docx via the API; identified all projects
+  with module/busbar classes, excluding known duplicates (gqljq, edfw3, MTech)
+  and the ~10 near-identical ca-2kt9o experiment forks (took one).
+- Downloaded 10 new projects; merged the module/busbar ones with a **perceptual-
+  hash (dHash) dedup + test-set leakage guard**: auto-detected each dataset's
+  module/busbar class indices from its data.yaml (verified correct), remapped to
+  2-class, skipped 131 duplicate/leaking images.
+- **Result: train 3,091 → 4,440 images** (1,349 new deduped). Module instances
+  10,367 → 14,590; busbar 3,621 → **5,040 (+39% on the weak class)**. Sources
+  now ~9 independent datasets. 43-image real TEST split untouched.
+- Also downloaded **uerymnd/ue_d1_defect_detection** (115 imgs, real damage
+  classes: corrosion/scratch/dent/missing-cover) — a candidate source of REAL
+  damaged crops for the classifier bad class (currently only 16 real). Not yet
+  processed.
+- Licence caveat: multi-source; licences vary (CC BY / BY-NC-SA / etc.) — must be
+  audited and disclosed before any non-academic use.
+
 ### First REAL new labeled data since the paper (+1,332 train images)
 - Downloaded 3 user-provided Roboflow datasets via API. Two are genuinely new
   with named module/busbar classes and independent images (0 exact duplicates
