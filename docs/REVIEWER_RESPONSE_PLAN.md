@@ -119,6 +119,33 @@ annotation effort.
   frames, pseudo-labels with the current detector into a review queue.
   Pseudo-labels must be human-reviewed before entering train/ (never val/test).
 
+## Generalization track — Zenodo dataset reality check
+
+The Zenodo "Battery Image Dataset for EV Circularity" was downloaded and
+inspected. Findings that change how it is used:
+
+- **712 images across 19 vehicle types, but NO bounding-box labels** — it is a
+  classification/representation dataset, not a detection dataset. It cannot be
+  merged as labelled detection data without an annotation pass.
+- **~158 images overlap our training source**: its "Tesla Model 3" and
+  "Tesla Model S black" folders are re-used from the same MTech Roboflow set this
+  project already trains on (stated in its README). Using those as "unseen" data
+  would be leakage.
+- **~554 images across 17 genuinely-new pack types** (Audi Q7, BMW i3/i4, Ford
+  Mondeo/Transit, Hyundai Ioniq, several Mercedes, VW Golf, Volvo truck, etc.)
+  are the valuable part.
+
+Two legitimate uses, both implemented / scaffolded:
+1. **Zero-shot cross-variant probe** (`scripts/eval_cross_variant.py`): run the
+   detector on each unseen pack type and report detection rate / mean conf /
+   module-vs-busbar counts. A recall-oriented generalization *proxy* (no labels
+   → no mAP), answering the single-facility criticism qualitatively and showing
+   which geometries transfer. **Runs after the Stage 2 retrain** (uses the new
+   detector).
+2. **Pseudo-label → human review → train** (same flow as
+   `harvest_youtube_frames.py`): pseudo-label the unseen variants, review, and
+   add to train/ for a real generalization boost. Needs a human annotation pass.
+
 ## Suggested order of execution
 
 1. Finish classifier architecture benchmark (running) → paper Table.
