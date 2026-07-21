@@ -39,3 +39,10 @@ data/classifier/bad_synth/
 
 # Temporary lighting-evaluation workspace
 /tmp/ev_lighting_eval/
+
+# Local-only benchmark artifacts (regenerate)
+dataset_bench.yaml
+dataset_aug.yaml
+yolo11n.pt
+models/detector/arch_benchmark/
+*.onnx
