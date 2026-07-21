@@ -11,14 +11,29 @@ and the measured result where relevant. Maintained across work sessions.
 
 ## 2026-07-21
 
-### Detector Stage 2 retrain with copy-paste + glare augmentation
-- Retrained the Stage 2 detector on the training split enlarged with 300
-  copy-paste composites + 200 synthetic-glare images (all derived from existing
-  training data; test split untouched).
-- **Result (real held-out test set, 43 images / 324 instances):**
-  mAP50 **0.818 → 0.882**, mAP50-95 **0.557 → 0.634**.
-- Note: gain is on the same-distribution test set (in-distribution improvement);
-  cross-facility generalization is measured separately by the cross-variant probe.
+### Programmable inference API (`scripts/inference_api.py`)
+- `BatteryInspector` class: image in (file path / numpy array / raw bytes) →
+  structured dict out. Each detection gives class, confidence, `box_xyxy`,
+  `box_xywh`, `center`, normalized `box_norm`, and (modules) `grade` + `p_bad`.
+- Three entry points: Python library import, JSON-returning CLI, and a minimal
+  stdlib HTTP service (`--serve`, POST an image to `/infer`).
+- Verified live: e.g. an image returning 6 modules + 12 busbars with pixel boxes
+  and per-module Grade A/B/C. Confirms the pipeline outputs 2D image-plane pixel
+  boxes (not real-world 3D coords — that needs camera calibration + depth).
+
+### CORRECTION: first augmentation retrain was invalid (config path bug)
+- The initial Stage 2 retrain read `dataset.yaml`, which hardcodes an absolute
+  `path:` to the **main repo** (`/Users/komiljon/research/data/detector`), while
+  the 500 copy-paste + glare images were added in the **worktree**. Training
+  therefore used the 1,760 unaugmented main-repo images; the augmentation was
+  never applied.
+- The reported 0.882/0.899 were the **val split** during training (normal
+  val/test gap). The real held-out **test** mAP50 was **0.816 — unchanged from
+  the 0.818 baseline** (byte-identical lighting numbers confirmed it).
+- Fix: added `dataset_aug.yaml` pointing at the worktree data and relaunched a
+  correct Stage 2 retrain on the true 2,260-image augmented set. Result pending.
+- Lesson: `dataset.yaml`'s absolute main-repo path is a footgun for worktree runs
+  (and machine-specific for public users) — should become relative.
 
 ### Zero-shot cross-variant generalization probe (`scripts/eval_cross_variant.py`)
 - Runs the detector on each of the 19 Zenodo pack variants and reports detection
