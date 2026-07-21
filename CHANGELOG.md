@@ -36,6 +36,23 @@ and the measured result where relevant. Maintained across work sessions.
 - **Final clean train: 4,425 images** (module 14,530 / busbar 4,992), 0 test-set
   leakage. Dataset quality verified.
 
+### NEGATIVE + KEY FINDING: naive 9-source merge collapses module detection
+- Trained YOLOv8n on the 4,425-image merged set (Colab T4, 52 epochs, early-stop).
+  **Test mAP50 = 0.331 vs 0.818 baseline** on the original 43-image MTech test set.
+- Breakdown is the finding: **module mAP50 collapsed to 0.094**, while
+  **busbar held at 0.568**. On the mixed val set module scored 0.59 — so the model
+  detects "module" as the merged sources define it, but not as MTech defines it.
+- **Cause: annotation-definition drift.** The 9 datasets label "module"
+  inconsistently (full module stack vs individual cells/leaf-cells vs pack).
+  Merging blurred the concept and poisoned module detection. Busbar is annotated
+  consistently across sources, so it improved. Confirms the annotation-quality
+  risk flagged at merge time: with conflicting labels, more data *hurts*.
+- **Decision: keep the 0.818 baseline shipped; do NOT adopt this model.** The
+  YOLO11n comparison would hit the same data issue (architecture-independent).
+- Publishable lesson: naive multi-source dataset merging degrades detection under
+  inconsistent annotation conventions — curation > volume. Fix: retrain on only
+  module-definition-consistent sources (keeps busbar gains, drops module noise).
+
 ### Major data expansion via Shiv's link doc — train 1,759 → 4,440 (deduped)
 - Enumerated 10 Roboflow workspaces (~50 projects) from
   Roboflow_EV_Battery_Related_Links.docx via the API; identified all projects
