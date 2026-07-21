@@ -28,6 +28,12 @@ data/detector/images/
 data/detector/labels/
 data/classifier/train/
 
+# External / harvested / generated data (regenerate via scripts)
+data/external/
+data/youtube_harvest/
+data/detector_singlestage/
+data/classifier/bad_synth/
+
 # Local backups created by the maintenance scripts
 .backup/
 
