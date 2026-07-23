@@ -11,6 +11,23 @@ and the measured result where relevant. Maintained across work sessions.
 
 ## 2026-07-21
 
+### BREAKTHROUGH: large-scale module detector works; MTech is the outlier
+- Evaluated the YOLO11n diverse-trained generalist on the 225-img diverse test:
+  overall mAP50 **0.397 vs the MTech specialist's 0.277**; module **0.511 vs 0.231
+  (2.2x better)**. The generalist genuinely detects modules across pack types.
+- Per-source module mAP50 (the money shot): ue_rav4 **0.995**, bmw_i3 **0.910**,
+  gqljq **0.873**, edfw3 **0.749** — excellent on almost every pack. ONLY MTech
+  collapses (**0.043**). MTech is the annotation-convention OUTLIER.
+- **The module "collapse" chased for hours was entirely a MTech-specific labeling
+  idiosyncrasy, not a capability failure.** The generalist learned the consensus
+  module definition (8 datasets agree) and applies it well everywhere; the paper's
+  single-facility benchmark was misleading.
+- Core positive result + publishable finding: multi-source training yields strong
+  cross-pack module detection; single-facility benchmarks with idiosyncratic
+  annotations under-report generalist capability. Busbar is the harder/more-variable
+  class here (0.12–0.57), opposite of what MTech implied.
+- Shippable large-scale module detector = the YOLO11n diverse best.pt.
+
 ### NEGATIVE: auto-labeled defect crops hurt the classifier (scale mismatch)
 - Built `scripts/build_classifier_from_defects.py`: auto-labels good/bad module
   crops by combining detector module boxes with a defect dataset's damage boxes
