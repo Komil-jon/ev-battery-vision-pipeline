@@ -11,6 +11,19 @@ and the measured result where relevant. Maintained across work sessions.
 
 ## 2026-07-21
 
+### Roadmap + Stage-2 (condition) status check + busbar diagnosis
+- Added `docs/ROADMAP.md` as the single source of truth for all queued work
+  (Colab run queue, local tasks, backlog, negative results, priority order).
+- Re-checked the condition-assessment classifier: bad-recall **0.857** (paper 0.714),
+  acc 0.792, wF1 0.800 on the real 48-img test. End-to-end catches 82/100 bad modules.
+  Bottleneck confirmed = DATA (only 16 real bad crops). Highest-payoff fix = the
+  diffusion damage-generation notebook (Colab #2) to break the 16-crop ceiling.
+- **Busbar diagnosis (why it's the weak class now, 0.284):** busbar labels in the
+  diverse test are dominated by MTech (175 of 287 instances = 61%), and only **4 of 8
+  test sources have any busbar labels at all**. So busbar has the SAME single-facility
+  annotation-coverage problem module had — not a model-capability failure. Fix =
+  broaden busbar labels across sources (Grounding DINO auto-label) before blaming aug.
+
 ### BREAKTHROUGH: large-scale module detector works; MTech is the outlier
 - Evaluated the YOLO11n diverse-trained generalist on the 225-img diverse test:
   overall mAP50 **0.397 vs the MTech specialist's 0.277**; module **0.511 vs 0.231
