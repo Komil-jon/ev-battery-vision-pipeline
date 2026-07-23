@@ -138,3 +138,49 @@ camera poses; labels come free from the renderer.
 
 **Golden rule:** never let synthetic or external images leak into the *test* split.
 All reported metrics must stay real-and-held-out.
+
+---
+
+## C. Modern methods (2024-2026 research) + what we tested
+
+Researched the current SOTA for "accurate AND general from little data" and tested
+the runnable routes. Findings:
+
+### Route 1 — Open-vocabulary detection (YOLO-World) — FAILS here
+Zero-shot text-prompted detection. Tested `yolov8s-worldv2` on the 225-img diverse
+test with prompts "ev battery module", "busbar": **mAP50 = 0.004** (total failure).
+EV battery components are too niche/out-of-distribution for open-vocab detectors.
+Confirms the literature ([OVOD robustness, arXiv 2405.14874](https://arxiv.org/html/2405.14874v3)).
+**Not usable as a detector.** ([YOLO-World](https://blog.roboflow.com/what-is-yolo-world/))
+
+### Route 2 — Open-vocab AUTO-LABELING (Grounding DINO) — VIABLE (human-in-loop)
+`grounding-dino-tiny` grounds modules/busbars/cells at 0.26-0.41 conf (vs
+YOLO-World's ~0). Good on clean pack images, rough on hard grayscale macro shots.
+Verdict: a **label accelerator that needs human verification**, not fully automatic.
+Fixes the annotation-consistency problem (one model + one prompt = one standard) and
+can label previously-unlabeled images (Zenodo 712, YouTube frames).
+- Implemented: `scripts/autolabel_grounding_dino.py` (runs CPU or GPU; `--preview`
+  to eyeball quality). Refs: [Grounding DINO](https://arxiv.org/abs/2303.05499),
+  [Autodistill Grounded-SAM-2](https://github.com/autodistill/autodistill-grounded-sam-2).
+
+### Route 3 — Frozen foundation-model backbone detector (RF-DETR / DINOv2) — MOST PROMISING
+The 2024-2026 consensus: a **frozen self-supervised backbone (DINOv2/DINOv3) + light
+detection head** gives SOTA generalization and resists small-data overfitting
+(DINOv3 hits 66.1 mAP COCO frozen; DINO-YOLO hybrids report up to +88% mAP in
+low-data regimes). RF-DETR (Roboflow, 2025) is the practical, pip-installable
+version with a DINOv2 backbone.
+- Implemented: `notebooks/colab_train_rfdetr.ipynb` (converts diverse YOLO data to
+  COCO, trains RF-DETR, evaluates on the diverse test). Compare vs specialist 0.277
+  and the YOLO11n generalist.
+- Refs: [DINOv3 (arXiv 2508.10104)](https://arxiv.org/html/2508.10104v1),
+  [DINO-YOLO few-shot detection](https://www.scitepress.org/Papers/2026/144164/144164.pdf),
+  [Mind the Backbone](https://arxiv.org/pdf/2303.14744).
+
+### Route 4 — Data-centric AI (the meta-lesson, already proven here)
+Labels beat quantity: we showed twice that merging inconsistent-label data *hurt*.
+Priorities: label-consistency audits (done), active learning, hard-negative mining,
+a bigger diverse test set (done: 225 imgs). ([small-object survey 2023-2025](https://www.mdpi.com/2076-3417/15/22/11882))
+
+**Recommended stack:** Grounding DINO auto-label (consistent labels at scale) ->
+RF-DETR / DINOv2-backbone train (accurate + general) -> distil to YOLO11n (fast CPU
+deployment). Evaluate everything on the diverse 225-img test, never the narrow one.
