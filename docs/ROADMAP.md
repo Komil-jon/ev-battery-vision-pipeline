@@ -27,6 +27,11 @@ The project has **two deliverables**, both must be accurate AND general:
 - **busbar is now the weak/variable class (0.12–0.57)** — opposite of the MTech story.
 
 ### Stage 2 — Condition assessment (classifier)
+> **NOVELTY DIRECTION (literature gap confirmed):** upgrade binary good/bad to
+> **damage-TYPE + severity grading** from RGB photos → reuse grade A/B/C. No prior
+> CV model does this for used modules (electrical A/B/C systems are blind to visual
+> damage). Full spec: `docs/NOVELTY_DAMAGE_TAXONOMY.md`.
+
 | Metric | Current | Paper | Target |
 |---|---|---|---|
 | Bad-class recall | **0.857** | 0.714 | ≥0.892 (85% e2e), ≥0.944 (90% e2e) |

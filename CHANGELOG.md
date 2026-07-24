@@ -23,6 +23,18 @@ and the measured result where relevant. Maintained across work sessions.
 - Split builder is reproducible: exclude `mtech_*` + `automated-disassembly*`
   prefixes from the diverse test.
 
+### Novelty scoped: visual damage-TYPE + severity grading (literature gap confirmed)
+- Searched the literature for a CV model that grades used EV battery modules by
+  damage type + severity from RGB photos. **Confirmed gap:** it doesn't exist.
+  Prior work splits into (a) A/B/C grading from ELECTRICAL signals only (blind to
+  visual damage), (b) manufacturing defect detection on bare electrodes/shells,
+  (c) severity grading in other domains (corrosion on metal structures, car body),
+  (d) one narrow battery-swelling mild/severe vision paper.
+- **Our contribution:** the missing visual modality — type + severity from images,
+  mapped to reuse grade A/B/C. Feasible because `synth_damage_overlay.py` already
+  emits typed damage (corrosion/burn/scratch) and the diffusion notebook can grow it.
+- Full spec: `docs/NOVELTY_DAMAGE_TAXONOMY.md`. Added to roadmap.
+
 ### NEGATIVE: Grounding DINO can't relabel MTech to consensus (L2 abandoned)
 - Ran a Grounding DINO preview on 20 MTech images to test the auto-relabel plan.
   It detects (18 module + 29 busbar boxes, 0 misses at image level) but the boxes
