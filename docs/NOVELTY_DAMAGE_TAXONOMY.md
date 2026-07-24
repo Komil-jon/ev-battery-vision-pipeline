@@ -51,6 +51,43 @@ systems are blind to (corrosion, burns, casing cracks, swelling, leakage).
 - Severity is subjective; define a rubric (area-% affected, functional risk) and
   report inter-rater agreement if possible.
 
+## Factory reality (informs scope; literature-verified 2026-07-24)
+Retired pack → **module** (primary grading/inspection point for second-life) →
+**cell** (only for suspect modules or recycling pathways). Not every module is torn
+down; inspection stops at the reusable unit. Refs: teardown steps (ScienceDirect
+S2666386421002484), remanufacture-to-cell (Springer s13243-020-00088-6), disassembly
+obstacles (MDPI processes 13/1/123).
+
+Implication for our scope: a module-level RGB model sees EXTERNAL damage (corrosion,
+burn, casing crack, dent, leakage, gross swelling). Cell-venting / subtle per-cell
+swelling is better at cell level; internal shorts/dendrites need electrical/CT.
+**State the scope as "module-level external damage from RGB," complementary to the
+electrical channel — not a replacement for it.**
+
+## Damage-type table (commonality / visibility / CV fit)
+| Type | Common | Module-visible | Current tech | CV difficulty | CV better? |
+|---|---|---|---|---|---|
+| Corrosion/oxidation | very | yes | electrical partial | medium | yes (earlier) |
+| Thermal/burn marks | moderate | yes | electrical mostly no | medium | yes (CV-only) |
+| Casing crack/dent | common | yes (hairline hard) | no | medium-hard | yes |
+| Swelling/bulging | common | partial (gross) | electrical partial | HARD (3D cue) | complementary |
+| Electrolyte leakage | moderate | yes (stains) | no | medium | yes |
+| Surface scratch | very | yes | no | easy | grade-only |
+| Connector/busbar dmg | moderate | yes | electrical partial | medium | yes |
+| Internal short/dendrite | dangerous | NO | electrical/CT only | out of scope | no |
+
+CV sweet spot = corrosion, burn, crack/dent, leakage, connector damage (electrical
+is blind to these). Swelling is the hard RGB case (needs side view). Internal faults
+are the honest out-of-scope boundary.
+
+## Two-head classifier feasibility
+Architecture is trivial (shared ResNet18 → multi-label type head + ordinal severity
+head; loss = BCE(type)+λ·CE(severity)). REAL work is labels: only 6 real damaged
+packs, so lean on synthetic (synth_damage_overlay already emits typed damage; severity
+= overlay intensity/area) and VALIDATE on a small human-graded real test set with
+honest per-type support. Rollout: ship binary good/bad→A/B/C first, add type+severity
+heads as the novelty extension.
+
 ## Status
 - [ ] Define rubric + relabel existing bad crops with type + severity
 - [ ] Diffusion-generate typed/severity crops (Colab #2)
