@@ -23,6 +23,24 @@ and the measured result where relevant. Maintained across work sessions.
 - Split builder is reproducible: exclude `mtech_*` + `automated-disassembly*`
   prefixes from the diverse test.
 
+### NEGATIVE: diffusion damage synthesis unusable (overfit to 6 real packs)
+- Ran the full diffusion pipeline (LoRA fine-tune on 40 real bad crops from 6 packs +
+  SD1.5 inpainting into good crops). Ran end-to-end, produced 180 crops.
+- **Output is unusable:** every crop shows the same artifact — chaotic over-woven
+  texture + repetitive bright RED cross/plus marks stamped along diagonals. Not
+  corrosion/burn/scratch; the LoRA memorized a superficial red-marking feature from
+  the 6 packs and stamped it everywhere. Classic few-shot diffusion overfitting.
+- **Decision: discard the batch, do NOT train on it** (would teach a fake "red cross
+  = bad" feature; same trap as ue_d1 crops + copy-paste aug that hurt the model).
+- Root cause is fundamental: 6 distinct real damaged packs is far too few for
+  diffusion to learn real damage appearance. Diffusion synthesis is NOT a viable fix
+  for the Stage-2 data bottleneck at this data scale.
+- **Pivot Stage-2 strategy:** lean on the good-only ANOMALY detector (already 0.857
+  bad-recall with ZERO bad training examples) as the primary condition-assessment
+  method — it sidesteps the no-bad-data problem entirely and is itself a novelty. The
+  damage-TYPE+severity extension needs REAL labeled damage (collection effort), not
+  synthesis.
+
 ### Novelty scoped: visual damage-TYPE + severity grading (literature gap confirmed)
 - Searched the literature for a CV model that grades used EV battery modules by
   damage type + severity from RGB photos. **Confirmed gap:** it doesn't exist.
