@@ -9,6 +9,26 @@ and the measured result where relevant. Maintained across work sessions.
 
 ---
 
+## 2026-07-24
+
+### BIG WIN: RF-DETR (DINOv2 backbone) nearly doubles the YOLO generalist
+- Trained RF-DETR-Nano (frozen DINOv2 backbone) on the diverse multi-source data,
+  35 epochs, converged (MTech-val mAP50-95 plateaued ~0.589 regular / 0.563 EMA).
+- **Diverse test (225 imgs, via supervision): mAP50 = 0.724, mAP50-95 = 0.601.**
+- Three-way comparison on the full diverse test:
+  | Model | mAP50 | mAP50-95 |
+  |---|---|---|
+  | MTech specialist (paper) | 0.277 | - |
+  | YOLO11n generalist | 0.397 | 0.231 |
+  | **RF-DETR (DINOv2)** | **0.724** | **0.601** |
+- RF-DETR ~2x the YOLO generalist and 2.6x the specialist. Confirms the 2024-2026
+  thesis: a frozen self-supervised backbone generalizes far better in small, diverse
+  data regimes. Strong publishable result; likely the detector to ship.
+- **CAVEAT (to resolve):** RF-DETR scored via supervision + 0.3 conf threshold; YOLO
+  via Ultralytics. Gap is too large to be a metric artifact, but need an apples-to-
+  apples same-protocol re-eval before the paper claim. Local rfdetr env installing to
+  do this. Checkpoints saved: checkpoint_best_regular.pth (0.589) is the best.
+
 ## 2026-07-21
 
 ### HEADLINE NUMBER: generalist module detection = 0.740 mAP50 (7 consensus sources)
