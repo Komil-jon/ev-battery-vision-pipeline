@@ -69,9 +69,11 @@ test.** This is a DATA problem — fix it with synthetic damage + more real crop
 
 - **L1 — Per-source & busbar diagnosis.** Break down busbar mAP by source to find
   why it is variable (0.12–0.57); decide if it needs relabeling or copy-paste aug.
-- **L2 — MTech relabel to consensus.** Run `scripts/autolabel_grounding_dino.py` on
-  MTech images to regenerate module labels in the consensus convention, human-spot-
-  check, swap into the diverse train/test. Removes the 0.043 outlier.
+- **L2 — MTech handling. [DONE — pivoted]** Grounding DINO auto-relabel FAILED
+  (garbage on MTech macro shots — see CHANGELOG). New plan: **report MTech separately
+  as an out-of-convention benchmark**; evaluate the generalist on the other 7 sources
+  (the consensus module definition). Build a "no-MTech" test split for the headline
+  number. Optional later: hand-relabel a small MTech subset if a reviewer demands it.
 - **L3 — Build a diverse classifier crop set.** Crop modules from the diverse packs
   to give the classifier varied GOOD examples (more pack styles, not just MTech).
 - **L4 — k-fold CV for the classifier.** The 48-img test is tiny; add k-fold +

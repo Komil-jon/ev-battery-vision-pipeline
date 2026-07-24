@@ -11,6 +11,32 @@ and the measured result where relevant. Maintained across work sessions.
 
 ## 2026-07-21
 
+### HEADLINE NUMBER: generalist module detection = 0.740 mAP50 (7 consensus sources)
+- Built a "no-MTech" test split (177 imgs, dropped the 48 out-of-convention MTech
+  images) and evaluated the YOLO11n generalist on it:
+  - Overall mAP50 **0.498** (vs 0.397 with MTech), mAP50-95 0.305.
+  - **module mAP50 0.740** (vs 0.511 with MTech) — the honest large-scale number.
+  - busbar mAP50 0.257 (vs 0.284) — slightly lower without MTech's busbar labels;
+    busbar stays the acknowledged weak class (sparse/uneven labels across sources).
+- **Paper headline: "detects EV modules at 0.740 mAP50 across 7 diverse pack
+  sources."** MTech reported separately as the out-of-convention benchmark.
+- Split builder is reproducible: exclude `mtech_*` + `automated-disassembly*`
+  prefixes from the diverse test.
+
+### NEGATIVE: Grounding DINO can't relabel MTech to consensus (L2 abandoned)
+- Ran a Grounding DINO preview on 20 MTech images to test the auto-relabel plan.
+  It detects (18 module + 29 busbar boxes, 0 misses at image level) but the boxes
+  are **incomplete on clean shots** (caught 2 of ~5 modules) and **near-noise on the
+  extreme grayscale macro close-ups** (a "busbar" box covering half the frame, a
+  "module" box on random corroded metal). Auto-relabeling 1,756 imgs would inject
+  garbage. Confirms the docs' "rough on hard grayscale macro shots" warning.
+- **Root cause made visual:** MTech "modules" are tiny GMR-labeled sub-boxes and
+  macro close-ups — a fundamentally different visual definition than a pack-level
+  module. Not an annotation error we can auto-fix; it's a different task.
+- **Strategy pivot:** stop trying to relabel MTech. Instead **report MTech separately
+  as an out-of-convention benchmark** and evaluate the generalist on the other 7
+  sources (the consensus definition). Cleaner, zero-compute, and honest for the paper.
+
 ### Roadmap + Stage-2 (condition) status check + busbar diagnosis
 - Added `docs/ROADMAP.md` as the single source of truth for all queued work
   (Colab run queue, local tasks, backlog, negative results, priority order).
