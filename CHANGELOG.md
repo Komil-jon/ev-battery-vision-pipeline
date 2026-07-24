@@ -53,8 +53,27 @@ and the measured result where relevant. Maintained across work sessions.
   packs; struggles only on the tiny-object MTech outlier.
 - Lesson: MTech val is a poor proxy; always judge on the diverse test. (Predicted
   YOLO would win from the declining val -> wrong; the eval settled it.)
-- Best checkpoint: checkpoint_best_ema(1).pth (full-label run) = the detector to ship,
-  pending per-class + no-MTech breakdown.
+- Best checkpoint: checkpoint_best_ema(1).pth (full-label run).
+
+### Complete per-class + no-MTech breakdown (the nuanced truth)
+| Test set | metric | RF-DETR | YOLO11n |
+|---|---|---|---|
+| Full diverse (225) | overall | **0.502** | 0.410 |
+|  | module | **0.680** | 0.547 |
+|  | busbar | **0.353** | 0.304 |
+| No-MTech (177) | overall | 0.558 | 0.544 |
+|  | module | 0.771 | 0.774 |
+|  | busbar | 0.366 | 0.344 |
+- **Key insight: on the 7 consensus sources RF-DETR and YOLO are a DEAD HEAT**
+  (module 0.771 vs 0.774). RF-DETR's overall win is ENTIRELY from robustness on the
+  out-of-convention MTech data: adding MTech drops YOLO module 0.774->0.547 (collapse)
+  but RF-DETR only 0.771->0.680 (graceful). DINOv2 backbone = more robust to weird
+  annotations, NOT better on normal packs.
+- **Defensible paper claim:** "RF-DETR matches YOLO on standard packs and is markedly
+  more robust to out-of-convention annotations (overall 0.502 vs 0.410)." Not '2x'.
+- **Ship decision:** RF-DETR for the accuracy/robustness headline (needs GPU, DETR);
+  YOLO11n stays the fast CPU-deployable option and is equal on normal packs. Report
+  both; lead the paper with RF-DETR's robustness result.
 
 ## 2026-07-21
 
