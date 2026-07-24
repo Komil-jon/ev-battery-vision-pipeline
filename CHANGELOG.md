@@ -11,23 +11,29 @@ and the measured result where relevant. Maintained across work sessions.
 
 ## 2026-07-24
 
-### BIG WIN: RF-DETR (DINOv2 backbone) nearly doubles the YOLO generalist
-- Trained RF-DETR-Nano (frozen DINOv2 backbone) on the diverse multi-source data,
-  35 epochs, converged (MTech-val mAP50-95 plateaued ~0.589 regular / 0.563 EMA).
-- **Diverse test (225 imgs, via supervision): mAP50 = 0.724, mAP50-95 = 0.601.**
-- Three-way comparison on the full diverse test:
+### RETRACTED then CORRECTED: RF-DETR "win" was a label-dropping bug
+- **Initial (WRONG) claim:** RF-DETR diverse-test mAP50=0.724, ~2x the YOLO
+  generalist (0.397). This was scored via supervision on a COCO conversion that
+  **dropped all polygon-format labels** (`if len(p)!=5: continue`).
+- **Root cause (bug):** the RF-DETR notebook's YOLO->COCO conversion drops every
+  non-5-field line. **80% of the diverse labels are polygon-format (16,071 of 20,004
+  train boxes, mostly MTech 13,517).** So RF-DETR TRAINED on only 20% of the labels
+  AND was evaluated on only that same 20% subset -> inflated, incomparable numbers.
+- **Corrected apples-to-apples** (both detectors, supervision mAP, conf=0.05, ALL
+  780 test boxes incl. polygons->bbox):
   | Model | mAP50 | mAP50-95 |
   |---|---|---|
-  | MTech specialist (paper) | 0.277 | - |
-  | YOLO11n generalist | 0.397 | 0.231 |
-  | **RF-DETR (DINOv2)** | **0.724** | **0.601** |
-- RF-DETR ~2x the YOLO generalist and 2.6x the specialist. Confirms the 2024-2026
-  thesis: a frozen self-supervised backbone generalizes far better in small, diverse
-  data regimes. Strong publishable result; likely the detector to ship.
-- **CAVEAT (to resolve):** RF-DETR scored via supervision + 0.3 conf threshold; YOLO
-  via Ultralytics. Gap is too large to be a metric artifact, but need an apples-to-
-  apples same-protocol re-eval before the paper claim. Local rfdetr env installing to
-  do this. Checkpoints saved: checkpoint_best_regular.pth (0.589) is the best.
+  | YOLO11n generalist | **0.410** | 0.256 |
+  | RF-DETR (DINOv2, 20%-label train) | 0.351 | **0.271** |
+  - Validation that the pipeline is sound: harmonized YOLO (0.410) matches the
+    independent Ultralytics score (0.397/0.410 TTA).
+- **Honest status:** RF-DETR does NOT currently beat YOLO. But the comparison is
+  still UNFAIR to RF-DETR — it trained on 1/5 of the labels. Fixed the notebook's
+  COCO conversion (polygon->bbox for train/val/test). **Must retrain RF-DETR on the
+  full labels before any RF-DETR vs YOLO conclusion.**
+- Lesson logged: always verify GT box counts match across pipelines (Ultralytics
+  reported 780; the RF-DETR COCO had 330 -> the tell we initially missed).
+- Checkpoints saved: checkpoint_best_regular.pth (from the 20%-label run; superseded).
 
 ## 2026-07-21
 
