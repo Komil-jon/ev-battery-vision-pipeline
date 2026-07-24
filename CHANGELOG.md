@@ -35,6 +35,27 @@ and the measured result where relevant. Maintained across work sessions.
   reported 780; the RF-DETR COCO had 330 -> the tell we initially missed).
 - Checkpoints saved: checkpoint_best_regular.pth (from the 20%-label run; superseded).
 
+### RESOLVED: fair full-label RF-DETR retrain BEATS YOLO (modest, real)
+- Retrained RF-DETR on the FIXED notebook (polygon->bbox, all ~20k labels), then
+  evaluated locally on the full-label diverse test, same supervision tool + conf as
+  YOLO. Clean apples-to-apples:
+  | Model | mAP50 | mAP50-95 |
+  |---|---|---|
+  | YOLO11n generalist | 0.410 | 0.256 |
+  | **RF-DETR (full-label, EMA)** | **0.502** | **0.312** |
+  | RF-DETR (full-label, regular) | 0.495 | 0.305 |
+- **RF-DETR wins by +0.092 mAP50 (~1.2x) and is better on mAP50-95 too.** Honest,
+  defensible margin (not the earlier bogus 0.724/2x from the label-dropping bug).
+- Training on full labels lifted RF-DETR from 0.351 (20%-label run) to 0.502.
+- Note: RF-DETR is WEAK on the MTech val (tiny sub-pixel modules at 384px res, val
+  declined 0.25->0.15), but WINS on the full diverse test because it's better on the
+  normal-sized modules across the other pack types. DINOv2 backbone helps on typical
+  packs; struggles only on the tiny-object MTech outlier.
+- Lesson: MTech val is a poor proxy; always judge on the diverse test. (Predicted
+  YOLO would win from the declining val -> wrong; the eval settled it.)
+- Best checkpoint: checkpoint_best_ema(1).pth (full-label run) = the detector to ship,
+  pending per-class + no-MTech breakdown.
+
 ## 2026-07-21
 
 ### HEADLINE NUMBER: generalist module detection = 0.740 mAP50 (7 consensus sources)
