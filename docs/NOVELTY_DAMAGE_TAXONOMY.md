@@ -17,6 +17,12 @@ Refs: AI grading (ResearchGate 397467392); Li-battery seg (Sci.Rep s41598-025-18
 corrosion grading (MDPI applsci 14/24/12009); swelling (ScienceDirect S2352152X25044597);
 car damage (Roboflow car-damage-kadad).
 
+Also checked (2026-07-27): Kaggle "EV Battery Defect Detection | ML + SHAP"
+(haritmengar) — sklearn (RF/GBM/LogReg/SVC)+SMOTE+SHAP on a SYNTHETIC TABULAR QC csv
+(1,000 rows; temp, anode overhang, electrolyte volume, internal resistance, capacity,
+retention). No images. Falls squarely in the "electrical/sensor-only" bucket — does
+NOT overlap the visual damage-type+severity gap; it reinforces the motivation.
+
 ## Our contribution (one sentence)
 A CV model that reads external damage **type** and **severity** on used EV battery
 modules from RGB images, supplying the visual modality that electrical A/B/C grading
