@@ -29,7 +29,7 @@ data/detector/labels/
 data/classifier/train/
 
 # External / harvested / generated data (regenerate via scripts)
-data/external/
+data/sources/
 data/youtube_harvest/
 data/detector_singlestage/
 data/classifier/bad_synth/

@@ -182,7 +182,7 @@ segmentation is for cables:
 | EV Battery Sample | 94 | Object Detection | Battery_Module, **Busbar**, Cooling_Channel… |
 | **validation Ev battery** | 85 | **Semantic Segmentation** | `evcable` — **cables only, not modules/busbars** |
 
-We already hold most of these in `data/external/`.
+We already hold most of these in `data/sources/`.
 
 Academic systems are detection-based too, and all single-rig:
 

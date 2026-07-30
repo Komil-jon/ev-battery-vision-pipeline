@@ -10,7 +10,7 @@ Supported sources:
                          types, CC BY 4.0, ~5.4 GB) from zenodo.org/records/19818270
   --roboflow WS/PROJECT  Any Roboflow Universe dataset (needs --api_key)
 
-Downloaded sets land in data/external/<source>/ — they are NOT auto-merged into
+Downloaded sets land in data/sources/<source>/ — they are NOT auto-merged into
 data/detector/. Inspect the class scheme first, then merge with --merge, which
 remaps classes to the project scheme (0=module, 1=busbar) using the mapping you
 provide via --class_map (same idea as scripts/remap_labels.py).
@@ -19,8 +19,8 @@ Usage:
     python scripts/data_prep/download_external_datasets.py --dry_run              # show plan only
     python scripts/data_prep/download_external_datasets.py --zenodo
     python scripts/data_prep/download_external_datasets.py --roboflow machine-iimx4/ev-battery-iceh6 --api_key KEY
-    # After inspecting data/external/<name>/data.yaml:
-    python scripts/data_prep/download_external_datasets.py --merge data/external/zenodo --class_map "2:0,5:1"
+    # After inspecting data/sources/<name>/data.yaml:
+    python scripts/data_prep/download_external_datasets.py --merge data/sources/zenodo --class_map "2:0,5:1"
 """
 
 import argparse
@@ -30,7 +30,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT         = Path(__file__).resolve().parents[2]
-EXTERNAL_DIR = ROOT / "data" / "external"
+EXTERNAL_DIR = ROOT / "data" / "sources"
 
 ZENODO_RECORD = "19818270"
 ZENODO_API    = f"https://zenodo.org/api/records/{ZENODO_RECORD}"

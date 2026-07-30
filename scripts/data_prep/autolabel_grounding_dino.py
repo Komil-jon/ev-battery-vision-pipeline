@@ -20,7 +20,7 @@ auto-labeling guides. See docs/IMPROVING_ACCURACY.md.
 
 Usage:
     pip install transformers torch pillow
-    python scripts/data_prep/autolabel_grounding_dino.py --images data/external/zenodo_ev_circularity/... --out data/autolabeled
+    python scripts/data_prep/autolabel_grounding_dino.py --images data/sources/zenodo_ev_circularity/... --out data/autolabeled
     python scripts/data_prep/autolabel_grounding_dino.py --images FOLDER --conf 0.3 --prompt "battery module. busbar."
     python scripts/data_prep/autolabel_grounding_dino.py --images FOLDER --preview   # draw boxes for a visual check
 """

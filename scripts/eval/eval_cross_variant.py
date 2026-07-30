@@ -34,7 +34,7 @@ import cv2
 
 ROOT      = Path(__file__).resolve().parents[2]
 WEIGHTS   = ROOT / "models" / "detector" / "specialist_yolov8n" / "weights" / "best.pt"
-ZENODO    = (ROOT / "data" / "external" / "zenodo_ev_circularity" /
+ZENODO    = (ROOT / "data" / "sources" / "zenodo_ev_circularity" /
              "Battery Image Dataset" / "images")
 OUT_DIR   = ROOT / "outputs" / "cross_variant"
 
