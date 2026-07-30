@@ -11,6 +11,45 @@ and the measured result where relevant. Maintained across work sessions.
 
 ## 2026-07-30
 
+### BIG FINDING: 55% of the data already carries instance-segmentation masks
+- Audited the label formats: **16,226 of 19,522 annotations are polygons, and they are
+  real segmentation masks, not 4-point boxes** — 5 to 151 vertices, tracing busbars
+  along their winding paths. Verified visually.
+- **2,614 of 4,760 images (55%) are segmentation-ready today**: 2,486 fully polygon,
+  128 mixed. Polygon annotations: module 11,766, busbar 4,460.
+- Every pipeline so far has flattened these to bounding boxes and thrown the boundary
+  information away. **We can train YOLO11-seg on the existing labels with no new
+  annotation work.**
+- Why this matters for the robotic-handling use case: a bounding box gives a robot a
+  rectangle, no orientation, and for a diagonal busbar the box is mostly background.
+  A mask gives the exact boundary, a true centroid, and an orientation from
+  `cv2.minAreaRect` / PCA on the mask. This is the credible path to grasp planning
+  and a stronger contribution than another detector comparison.
+
+### Dataset quality audit (detector train split, 4,425 images)
+- 23.5% unlabelled (1,040) — 97 are statistical anomalies, 943 need visual review.
+  Confirmed by eye that at least some are genuinely **under-labelled** (e.g. a
+  `final_mobilenet_results` frame showing an open pack with a clearly visible orange
+  busbar assembly and zero labels). Under-labelled frames actively teach the detector
+  that visible busbars are background, and are a plausible contributor to the
+  persistently weak busbar scores (0.30-0.35 mAP50).
+- 12.3% "blurry" and 20.4% greyscale — **largely benign**. The lowest-blur images are
+  smooth closed pack lids (Laplacian variance is low for flat surfaces, not just for
+  out-of-focus shots), and the greyscale images come entirely from two monochrome
+  sources (`automated`, `bmw`). Both add robustness; do not delete on the metric alone.
+- 0 degenerate boxes. Tooling: `scripts/audit_dataset.py` (flags + contact sheets,
+  deletes nothing).
+
+### Zenodo dataset: downloaded, but NOT usable for detection as-is
+- `data/external/zenodo_ev_circularity/` = 712 images (697 jpg, 15 jpeg) + 12 videos
+  across 19 vehicle types, 5.1 GB. **Zero annotation files of any kind.** "Labelled"
+  in its README means folder-level vehicle class — it is a classification dataset.
+- **78 of its images are already in our training data** (exact dHash match, identical
+  filenames): its "Tesla Model 3" and "Tesla Model S black" classes are re-published
+  MTech images, as its README states. ~634 images are genuinely new.
+- To use it for detection it must be labelled first (Grounding DINO auto-label +
+  human verification, or manual), and the 78 duplicates excluded to avoid leakage.
+
 ### Model zoo: all three detectors selectable with `--model`
 - Added `scripts/model_zoo.py`, a registry of every trained detector plus a thin
   wrapper giving YOLO and RF-DETR the same `.predict()` interface. Every entry point
