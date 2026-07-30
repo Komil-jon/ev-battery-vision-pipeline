@@ -46,3 +46,6 @@ dataset_aug.yaml
 yolo11n.pt
 models/detector/arch_benchmark/
 *.onnx
+
+# RF-DETR checkpoint exceeds GitHub's 100MB limit -- fetch separately
+models/detector/generalist_rfdetr/weights/*.pth

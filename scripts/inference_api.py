@@ -47,10 +47,11 @@ import torch
 import torch.nn as nn
 from PIL import Image
 from torchvision import models, transforms
-from ultralytics import YOLO
+
+from model_zoo import load_detector as load_zoo_detector, MODEL_REGISTRY, DEFAULT_MODEL
 
 ROOT               = Path(__file__).resolve().parent.parent
-DETECTOR_WEIGHTS   = ROOT / "models" / "detector" / "stage2_recall_boost" / "weights" / "best.pt"
+DETECTOR_WEIGHTS   = MODEL_REGISTRY[DEFAULT_MODEL].weights
 CLASSIFIER_WEIGHTS = ROOT / "models" / "classifier" / "resnet18_binary.pth"
 CLASS_MAP_PATH     = ROOT / "models" / "classifier" / "class_map.json"
 
@@ -75,12 +76,18 @@ def _grade(p_bad: float) -> str:
 class BatteryInspector:
     """Loads both models once; call .infer() repeatedly (e.g. per camera frame)."""
 
-    def __init__(self, detector_weights=DETECTOR_WEIGHTS,
+    def __init__(self, model: str = None, detector_weights=None,
                  classifier_weights=CLASSIFIER_WEIGHTS,
-                 class_map_path=CLASS_MAP_PATH, conf=0.21, imgsz=768):
-        self.conf = conf
+                 class_map_path=CLASS_MAP_PATH, conf=None, imgsz=768):
+        """model: a name from MODEL_REGISTRY ('specialist', 'generalist_yolo',
+        'generalist_rfdetr'). detector_weights: explicit path override.
+        conf: None uses the selected model's suggested threshold."""
         self.imgsz = imgsz
-        self.detector = YOLO(str(detector_weights))
+        if detector_weights is not None:
+            self.detector = load_zoo_detector(weights_path=str(detector_weights))
+        else:
+            self.detector = load_zoo_detector(name=model or DEFAULT_MODEL)
+        self.conf = conf if conf is not None else self.detector.default_conf
         self.names = self.detector.names
 
         self.classifier = models.resnet18()
@@ -117,15 +124,14 @@ class BatteryInspector:
         h, w = img.shape[:2]
         t0 = time.perf_counter()
 
-        det_res = self.detector(img, conf=self.conf, imgsz=self.imgsz,
-                                device="cpu", verbose=False)[0]
+        det_res = self.detector.predict(img, conf=self.conf, imgsz=self.imgsz)
 
         detections = []
-        for box in det_res.boxes:
-            cls_id = int(box.cls)
-            label = self.names[cls_id]
-            conf = float(box.conf)
-            x1, y1, x2, y2 = [int(v) for v in box.xyxy[0]]
+        for det in det_res:
+            cls_id = det.cls_id
+            label = det.label
+            conf = det.conf
+            x1, y1, x2, y2 = det.xyxy
 
             rec = {
                 "class": label,
@@ -198,14 +204,23 @@ def _serve(inspector: "BatteryInspector", host: str, port: int):
 def main():
     ap = argparse.ArgumentParser(description="Programmable EV battery inspection API")
     ap.add_argument("--input", type=str, help="Image file to run once")
-    ap.add_argument("--conf", type=float, default=0.21)
+    ap.add_argument("--conf", type=float, default=None,
+                    help="Detection confidence. Default: the selected model's suggested value.")
     ap.add_argument("--json_only", action="store_true", help="Print only JSON")
     ap.add_argument("--serve", action="store_true", help="Run as an HTTP service")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8000)
+    ap.add_argument("--model", type=str, default=DEFAULT_MODEL, choices=list(MODEL_REGISTRY.keys()),
+                    help=f"Which detector to use (default: {DEFAULT_MODEL})")
+    ap.add_argument("--list-models", action="store_true", help="List available detectors and exit")
     args = ap.parse_args()
 
-    inspector = BatteryInspector(conf=args.conf)
+    if args.list_models:
+        from model_zoo import list_models
+        print(list_models())
+        return
+
+    inspector = BatteryInspector(model=args.model, conf=args.conf)
 
     if args.serve:
         _serve(inspector, args.host, args.port)

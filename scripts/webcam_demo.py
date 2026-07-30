@@ -29,10 +29,11 @@ from PIL import Image
 
 # Reuse the shared pipeline building blocks so behaviour matches the batch script.
 from pipeline_inference import (
-    load_detector, load_classifier, get_grade,
+    load_classifier, get_grade,
     CLASSIFIER_TRANSFORM, GRADE_COLOURS,
     DETECTOR_WEIGHTS, CLASSIFIER_WEIGHTS, CLASS_MAP_PATH, OUTPUT_DIR,
 )
+from model_zoo import load_detector as load_zoo_detector, MODEL_REGISTRY, DEFAULT_MODEL, list_models
 
 
 def process_frame(frame, detector, classifier, bad_idx, conf, imgsz, crop_padding=10):
@@ -41,36 +42,34 @@ def process_frame(frame, detector, classifier, bad_idx, conf, imgsz, crop_paddin
     annotated = frame.copy()
     n_mod = n_bus = 0
 
-    results = detector(frame, conf=conf, imgsz=imgsz, device="cpu", verbose=False)
-    for r in results:
-        for box in r.boxes:
-            label = detector.names[int(box.cls)]
-            det_conf = float(box.conf)
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
+    for det in detector.predict(frame, conf=conf, imgsz=imgsz):
+        label = det.label
+        det_conf = det.conf
+        x1, y1, x2, y2 = det.xyxy
 
-            if label == "module":
-                n_mod += 1
-                px1, py1 = max(0, x1 - crop_padding), max(0, y1 - crop_padding)
-                px2, py2 = min(w, x2 + crop_padding), min(h, y2 + crop_padding)
-                crop = frame[py1:py2, px1:px2]
-                if crop.size == 0:
-                    continue
-                pil = Image.fromarray(cv2.cvtColor(crop, cv2.COLOR_BGR2RGB))
-                tensor = CLASSIFIER_TRANSFORM(pil).unsqueeze(0)
-                with torch.no_grad():
-                    probs = torch.softmax(classifier(tensor), dim=1)[0]
-                    p_bad = probs[bad_idx].item()
-                grade, colour = get_grade(p_bad)
-                text = f"module Grade {grade} p_bad={p_bad:.2f}"
-                cv2.rectangle(annotated, (x1, y1), (x2, y2), colour, 2)
-                cv2.putText(annotated, text, (x1, max(y1 - 8, 12)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, colour, 1, cv2.LINE_AA)
-            elif label == "busbar":
-                n_bus += 1
-                colour = (255, 200, 0)
-                cv2.rectangle(annotated, (x1, y1), (x2, y2), colour, 2)
-                cv2.putText(annotated, f"busbar {det_conf:.2f}", (x1, max(y1 - 8, 12)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, colour, 1, cv2.LINE_AA)
+        if label == "module":
+            n_mod += 1
+            px1, py1 = max(0, x1 - crop_padding), max(0, y1 - crop_padding)
+            px2, py2 = min(w, x2 + crop_padding), min(h, y2 + crop_padding)
+            crop = frame[py1:py2, px1:px2]
+            if crop.size == 0:
+                continue
+            pil = Image.fromarray(cv2.cvtColor(crop, cv2.COLOR_BGR2RGB))
+            tensor = CLASSIFIER_TRANSFORM(pil).unsqueeze(0)
+            with torch.no_grad():
+                probs = torch.softmax(classifier(tensor), dim=1)[0]
+                p_bad = probs[bad_idx].item()
+            grade, colour = get_grade(p_bad)
+            text = f"module Grade {grade} p_bad={p_bad:.2f}"
+            cv2.rectangle(annotated, (x1, y1), (x2, y2), colour, 2)
+            cv2.putText(annotated, text, (x1, max(y1 - 8, 12)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, colour, 1, cv2.LINE_AA)
+        elif label == "busbar":
+            n_bus += 1
+            colour = (255, 200, 0)
+            cv2.rectangle(annotated, (x1, y1), (x2, y2), colour, 2)
+            cv2.putText(annotated, f"busbar {det_conf:.2f}", (x1, max(y1 - 8, 12)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, colour, 1, cv2.LINE_AA)
 
     return annotated, n_mod, n_bus
 
@@ -79,16 +78,30 @@ def main():
     ap = argparse.ArgumentParser(description="Live webcam two-stage EV battery pipeline")
     ap.add_argument("--camera", type=int, default=0, help="Webcam index (default 0)")
     ap.add_argument("--input", type=str, default=None, help="Optional video file instead of webcam")
-    ap.add_argument("--conf", type=float, default=0.21, help="Detection confidence (paper optimum ~0.21)")
+    ap.add_argument("--conf", type=float, default=None,
+                    help="Detection confidence. Default: the selected model's suggested value.")
     ap.add_argument("--imgsz", type=int, default=640, help="Inference size; lower = faster (e.g. 480)")
-    ap.add_argument("--detector", type=str, default=str(DETECTOR_WEIGHTS))
+    ap.add_argument("--model", type=str, default=DEFAULT_MODEL, choices=list(MODEL_REGISTRY.keys()),
+                    help=f"Which detector to use (default: {DEFAULT_MODEL})")
+    ap.add_argument("--detector", type=str, default=None,
+                    help="Override --model with an explicit path to detector weights")
     ap.add_argument("--classifier", type=str, default=str(CLASSIFIER_WEIGHTS))
+    ap.add_argument("--list-models", action="store_true", help="List available detectors and exit")
     args = ap.parse_args()
 
+    if args.list_models:
+        print(list_models())
+        return
+
     print("Loading models...")
-    detector = load_detector(Path(args.detector))
+    if args.detector:
+        detector = load_zoo_detector(weights_path=args.detector)
+    else:
+        detector = load_zoo_detector(name=args.model)
     classifier, bad_idx = load_classifier(Path(args.classifier), CLASS_MAP_PATH)
-    print(f"  conf={args.conf}  imgsz={args.imgsz}  bad_idx={bad_idx}")
+    conf = args.conf if args.conf is not None else detector.default_conf
+    print(f"  Detector: {detector.label}")
+    print(f"  conf={conf}  imgsz={args.imgsz}  bad_idx={bad_idx}")
 
     source = args.input if args.input else args.camera
     cap = cv2.VideoCapture(source)
@@ -109,7 +122,7 @@ def main():
 
         t0 = time.perf_counter()
         annotated, n_mod, n_bus = process_frame(
-            frame, detector, classifier, bad_idx, args.conf, args.imgsz)
+            frame, detector, classifier, bad_idx, conf, args.imgsz)
         dt = time.perf_counter() - t0
         fps_smooth = 0.9 * fps_smooth + 0.1 * (1.0 / dt) if dt > 0 else fps_smooth
 
