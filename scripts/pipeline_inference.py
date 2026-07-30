@@ -36,12 +36,13 @@ import torch
 import torch.nn as nn
 from PIL import Image
 from torchvision import models, transforms
-from ultralytics import YOLO
+
+from model_zoo import load_detector as load_zoo_detector, MODEL_REGISTRY, DEFAULT_MODEL, list_models
 
 
 # ── paths ──────────────────────────────────────────────────────────────────────
 ROOT             = Path(__file__).resolve().parent.parent
-DETECTOR_WEIGHTS = ROOT / "models" / "detector" / "stage2_recall_boost" / "weights" / "best.pt"
+DETECTOR_WEIGHTS = MODEL_REGISTRY[DEFAULT_MODEL].weights  # kept for other scripts that import this
 CLASSIFIER_WEIGHTS = ROOT / "models" / "classifier" / "resnet18_binary.pth"
 CLASS_MAP_PATH   = ROOT / "models" / "classifier" / "class_map.json"
 OUTPUT_DIR       = ROOT / "outputs" / "results"
@@ -66,15 +67,6 @@ CLASSIFIER_TRANSFORM = transforms.Compose([
     transforms.Normalize([0.485, 0.456, 0.406],
                          [0.229, 0.224, 0.225]),
 ])
-
-
-def load_detector(weights_path: Path) -> YOLO:
-    if not weights_path.exists():
-        raise FileNotFoundError(
-            f"Detector weights not found: {weights_path}\n"
-            "Run train_detector.py first."
-        )
-    return YOLO(str(weights_path))
 
 
 def load_classifier(weights_path: Path, class_map_path: Path):
@@ -109,7 +101,7 @@ def get_grade(p_bad: float) -> tuple[str, tuple]:
 
 def run_pipeline(
     image_path: Path,
-    detector: YOLO,
+    detector,
     classifier,
     bad_idx: int,
     conf_threshold: float = 0.21,
@@ -136,64 +128,62 @@ def run_pipeline(
     t0 = time.perf_counter()
 
     # ── Stage 1: Detection ────────────────────────────────────────────────────
-    det_results = detector(str(image_path), conf=conf_threshold, imgsz=768, device="cpu", verbose=False)
+    detections = detector.predict(str(image_path), conf=conf_threshold, imgsz=768)
     det_ms = (time.perf_counter() - t0) * 1000
     results_meta["det_ms"] = round(det_ms, 1)
 
-    for r in det_results:
-        for box in r.boxes:
-            cls_id  = int(box.cls)
-            label   = detector.names[cls_id]
-            det_conf = float(box.conf)
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
+    for det in detections:
+        label = det.label
+        det_conf = det.conf
+        x1, y1, x2, y2 = det.xyxy
 
-            if label == "module":
-                # ── Stage 2: Classification ───────────────────────────────────
-                px1 = max(0, x1 - crop_padding)
-                py1 = max(0, y1 - crop_padding)
-                px2 = min(w, x2 + crop_padding)
-                py2 = min(h, y2 + crop_padding)
-                crop_bgr = img_bgr[py1:py2, px1:px2]
+        if label == "module":
+            # ── Stage 2: Classification ───────────────────────────────────────
+            px1 = max(0, x1 - crop_padding)
+            py1 = max(0, y1 - crop_padding)
+            px2 = min(w, x2 + crop_padding)
+            py2 = min(h, y2 + crop_padding)
+            crop_bgr = img_bgr[py1:py2, px1:px2]
 
-                if crop_bgr.size == 0:
-                    continue
+            if crop_bgr.size == 0:
+                continue
 
-                pil_crop = Image.fromarray(cv2.cvtColor(crop_bgr, cv2.COLOR_BGR2RGB))
-                tensor   = CLASSIFIER_TRANSFORM(pil_crop).unsqueeze(0)
+            pil_crop = Image.fromarray(cv2.cvtColor(crop_bgr, cv2.COLOR_BGR2RGB))
+            tensor   = CLASSIFIER_TRANSFORM(pil_crop).unsqueeze(0)
 
-                with torch.no_grad():
-                    probs = torch.softmax(classifier(tensor), dim=1)[0]
-                    p_bad = probs[bad_idx].item()
+            with torch.no_grad():
+                probs = torch.softmax(classifier(tensor), dim=1)[0]
+                p_bad = probs[bad_idx].item()
 
-                grade, colour = get_grade(p_bad)
-                label_str = f"module | Grade {grade} | p_bad={p_bad:.2f} | d={det_conf:.2f}"
+            grade, colour = get_grade(p_bad)
+            label_str = f"module | Grade {grade} | p_bad={p_bad:.2f} | d={det_conf:.2f}"
 
-                cv2.rectangle(annotated, (x1, y1), (x2, y2), colour, 2)
-                cv2.putText(
-                    annotated, label_str,
-                    (x1, max(y1 - 8, 10)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.42, colour, 1, cv2.LINE_AA
-                )
+            cv2.rectangle(annotated, (x1, y1), (x2, y2), colour, 2)
+            cv2.putText(
+                annotated, label_str,
+                (x1, max(y1 - 8, 10)),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.42, colour, 1, cv2.LINE_AA
+            )
 
-                results_meta["modules"].append({
-                    "bbox":   [x1, y1, x2, y2],
-                    "det_conf": round(det_conf, 3),
-                    "p_bad":  round(p_bad, 3),
-                    "grade":  grade,
-                })
+            results_meta["modules"].append({
+                "bbox":   [x1, y1, x2, y2],
+                "det_conf": round(det_conf, 3),
+                "p_bad":  round(p_bad, 3),
+                "grade":  grade,
+            })
 
-            elif label == "busbar":
-                colour = (255, 200, 0)  # cyan-ish
-                cv2.rectangle(annotated, (x1, y1), (x2, y2), colour, 2)
-                cv2.putText(
-                    annotated, f"busbar {det_conf:.2f}",
-                    (x1, max(y1 - 8, 10)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.42, colour, 1, cv2.LINE_AA
-                )
-                results_meta["busbars"].append({
-                    "bbox": [x1, y1, x2, y2],
-                    "det_conf": round(det_conf, 3),
-                })
+        elif label == "busbar":
+            colour = (255, 200, 0)  # cyan-ish
+            cv2.rectangle(annotated, (x1, y1), (x2, y2), colour, 2)
+            cv2.putText(
+                annotated, f"busbar {det_conf:.2f}",
+                (x1, max(y1 - 8, 10)),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.42, colour, 1, cv2.LINE_AA
+            )
+            results_meta["busbars"].append({
+                "bbox": [x1, y1, x2, y2],
+                "det_conf": round(det_conf, 3),
+            })
 
     total_ms = (time.perf_counter() - t0) * 1000
     results_meta["total_ms"] = round(total_ms, 1)
@@ -245,30 +235,47 @@ def process_path(input_path: Path, detector, classifier, bad_idx, conf: float):
 
 def main():
     parser = argparse.ArgumentParser(description="EV Battery two-stage inspection pipeline")
-    parser.add_argument("--input",  type=str,   required=True, help="Image file or folder")
-    parser.add_argument("--conf",   type=float, default=0.21,  help="Detection confidence threshold (paper optimum ~0.21)")
+    parser.add_argument("--input",  type=str,   default=None, help="Image file or folder")
+    parser.add_argument("--conf",   type=float, default=None,
+                        help="Detection confidence threshold. Default: the selected model's "
+                             "suggested value (scores are not comparable across models).")
     parser.add_argument(
-        "--detector",   type=str,
-        default=str(DETECTOR_WEIGHTS),
-        help="Path to detector .pt weights"
+        "--model", type=str, default=DEFAULT_MODEL,
+        choices=list(MODEL_REGISTRY.keys()),
+        help=f"Which detector to use (default: {DEFAULT_MODEL}). Run --list-models for details."
+    )
+    parser.add_argument(
+        "--detector",   type=str, default=None,
+        help="Override --model with an explicit path to detector .pt weights"
     )
     parser.add_argument(
         "--classifier", type=str,
         default=str(CLASSIFIER_WEIGHTS),
         help="Path to classifier .pth weights"
     )
+    parser.add_argument("--list-models", action="store_true", help="List available detectors and exit")
     args = parser.parse_args()
 
+    if args.list_models:
+        print(list_models())
+        return
+    if not args.input:
+        parser.error("--input is required (or use --list-models)")
+
     print("Loading models...")
-    detector              = load_detector(Path(args.detector))
+    if args.detector:
+        detector = load_zoo_detector(weights_path=args.detector)
+    else:
+        detector = load_zoo_detector(name=args.model)
     classifier, bad_idx   = load_classifier(Path(args.classifier), CLASS_MAP_PATH)
-    print(f"  Detector:   {args.detector}")
+    conf = args.conf if args.conf is not None else detector.default_conf
+    print(f"  Detector:   {detector.label}")
     print(f"  Classifier: {args.classifier}")
     print(f"  Bad-class index: {bad_idx}")
-    print(f"  Confidence threshold: {args.conf}")
+    print(f"  Confidence threshold: {conf}" + ("" if args.conf is not None else "  (model default)"))
     print(f"  Grade thresholds: A<{GRADE_A_THRESHOLD} | B<{GRADE_C_THRESHOLD} | C≥{GRADE_C_THRESHOLD}")
 
-    process_path(Path(args.input), detector, classifier, bad_idx, args.conf)
+    process_path(Path(args.input), detector, classifier, bad_idx, conf)
 
 
 if __name__ == "__main__":

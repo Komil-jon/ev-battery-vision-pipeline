@@ -57,10 +57,23 @@ TEST_TRANSFORM = transforms.Compose([
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
-def load_detector():
-    if not DETECTOR_WEIGHTS.exists():
-        raise FileNotFoundError(f"Detector weights not found: {DETECTOR_WEIGHTS}")
-    return YOLO(str(DETECTOR_WEIGHTS))
+def load_detector(model_name: str = None):
+    """Load a detector from the model zoo by name. This evaluator uses Ultralytics'
+    .val() for mAP, so it supports the YOLO models only; RF-DETR is evaluated with
+    scripts/compare_detectors.py instead."""
+    from model_zoo import MODEL_REGISTRY, DEFAULT_MODEL
+    name = model_name or DEFAULT_MODEL
+    info = MODEL_REGISTRY[name]
+    if info.kind != "yolo":
+        raise ValueError(
+            f"'{name}' is a {info.kind} model. evaluate.py uses Ultralytics .val() and "
+            "supports YOLO models only.\nUse: python scripts/compare_detectors.py "
+            f"--models {name} ... for a metric-matched comparison."
+        )
+    if not info.weights.exists():
+        raise FileNotFoundError(f"Detector weights not found: {info.weights}  ({info.label})")
+    print(f"  Detector: {info.label}")
+    return YOLO(str(info.weights))
 
 
 def load_classifier():
@@ -295,16 +308,24 @@ def main():
     parser.add_argument("--skip_lighting",   action="store_true", help="Skip lighting robustness (faster)")
     parser.add_argument("--skip_detector",   action="store_true")
     parser.add_argument("--skip_classifier", action="store_true")
+    parser.add_argument("--model", type=str, default=None,
+                        help="Detector to evaluate (YOLO models only; see --list-models)")
+    parser.add_argument("--list-models", action="store_true", help="List available detectors and exit")
     args = parser.parse_args()
+
+    if args.list_models:
+        from model_zoo import list_models
+        print(list_models())
+        return
 
     module_recall = bad_recall = None
     if not args.skip_detector:
         try:
-            det = load_detector()
+            det = load_detector(args.model)
             module_recall = evaluate_detector(det, args)
             if not args.skip_lighting:
                 evaluate_lighting(det)
-        except FileNotFoundError as e:
+        except (FileNotFoundError, ValueError) as e:
             print(f"\n[SKIP] {e}")
 
     if not args.skip_classifier:

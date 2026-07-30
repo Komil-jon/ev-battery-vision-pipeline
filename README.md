@@ -108,11 +108,15 @@ ev-battery-cv/
 ├── models/
 │   ├── detector/
 │   │   ├── stage1/weights/best.pt
-│   │   └── stage2_recall_boost/weights/best.pt
+│   │   ├── stage2_recall_boost/weights/best.pt   ← --model specialist
+│   │   ├── generalist_yolo11n/weights/best.pt    ← --model generalist_yolo
+│   │   └── generalist_rfdetr/                    ← --model generalist_rfdetr
+│   │       └── README.md                            (weights downloaded separately)
 │   └── classifier/
 │       ├── resnet18_binary.pth
 │       └── class_map.json
 ├── scripts/
+│   ├── model_zoo.py            ← model registry; one interface over YOLO + RF-DETR
 │   ├── download_dataset.py     ← get public EV battery data from Roboflow
 │   ├── remap_labels.py         ← remap Roboflow 7-class → paper 2-class (REQUIRED)
 │   ├── augment_busbars.py      ← busbar-targeted recall-boost augmentation
@@ -121,6 +125,7 @@ ev-battery-cv/
 │   ├── train_classifier.py     ← ResNet18 binary classifier training
 │   ├── pipeline_inference.py   ← full two-stage inference + triage output
 │   ├── webcam_demo.py          ← live webcam / video two-stage demo
+│   ├── compare_detectors.py    ← metric-matched comparison across all models
 │   └── evaluate.py             ← detector + classifier + lighting evaluation
 ├── outputs/results/            ← annotated output images saved here
 ├── dataset.yaml                ← YOLO dataset config
@@ -232,16 +237,55 @@ Expects images in `data/classifier/train/good/` and `data/classifier/train/bad/`
 
 ---
 
+## Choosing a detector
+
+Three trained detectors ship with this project. Every inference and evaluation
+script takes `--model NAME`, so you can switch without editing code:
+
+| `--model` | What it is | Diverse test mAP50 | Best for |
+|---|---|---|---|
+| `specialist` | Paper baseline, YOLOv8n trained on one facility (MTech) | 0.277 | That facility's imagery (0.818 in-domain) |
+| `generalist_yolo` *(default)* | YOLO11n trained on 10 diverse pack sources | 0.410 | General use, CPU / real time |
+| `generalist_rfdetr` | RF-DETR-Nano, frozen DINOv2 backbone | **0.502** | Best accuracy and robustness; needs a GPU to be fast |
+
+```bash
+# See all models, their metrics and whether the weights are present
+python scripts/model_zoo.py
+
+# Same, from any script
+python scripts/pipeline_inference.py --list-models
+```
+
+The specialist scores highest on the facility it was trained on but collapses on
+other pack types; the generalists trade in-domain peak accuracy for cross-facility
+robustness. On the 7 consensus sources (excluding the MTech annotation outlier)
+`generalist_yolo` and `generalist_rfdetr` are effectively tied on modules
+(0.774 vs 0.771) — RF-DETR's overall lead comes from degrading gracefully on
+out-of-convention data. Full history in [CHANGELOG.md](CHANGELOG.md).
+
+**Confidence thresholds are not comparable across models.** Each model carries a
+suggested `--conf` (specialist 0.21, generalist_yolo 0.10, generalist_rfdetr 0.30)
+which is applied automatically unless you pass `--conf` yourself.
+
+`generalist_rfdetr` needs `pip install rfdetr`, and its checkpoint is downloaded
+separately — see [models/detector/generalist_rfdetr/README.md](models/detector/generalist_rfdetr/README.md).
+
+---
+
 ## Inference
 
 ```bash
-# Single image
+# Single image (uses the default model, generalist_yolo)
 python scripts/pipeline_inference.py --input path/to/image.jpg
+
+# Pick a specific model
+python scripts/pipeline_inference.py --input image.jpg --model specialist
+python scripts/pipeline_inference.py --input image.jpg --model generalist_rfdetr
 
 # Folder of images
 python scripts/pipeline_inference.py --input data/detector/images/test/
 
-# Custom confidence threshold (paper F1-optimal: 0.21)
+# Override the model's default confidence threshold
 python scripts/pipeline_inference.py --input image.jpg --conf 0.21
 ```
 
@@ -250,10 +294,14 @@ Output images saved to `outputs/results/`.
 ### Live webcam / video demo
 
 ```bash
-python scripts/webcam_demo.py                 # default camera, imgsz 640
-python scripts/webcam_demo.py --imgsz 480     # faster / smoother on CPU
-python scripts/webcam_demo.py --input clip.mp4  # run on a video file instead
+python scripts/webcam_demo.py                        # default camera + default model
+python scripts/webcam_demo.py --model specialist     # pick a model
+python scripts/webcam_demo.py --imgsz 480            # faster / smoother on CPU
+python scripts/webcam_demo.py --input clip.mp4       # run on a video file instead
 ```
+
+> Use a YOLO model for live video. `generalist_rfdetr` runs at roughly 0.2 FPS on
+> a CPU, so it is for batch use unless you have a GPU.
 
 Press `q` to quit, `s` to save the current annotated frame to `outputs/results/`.
 
@@ -273,11 +321,42 @@ quit and reopen the terminal and rerun.
 # Full evaluation (detector + classifier + lighting robustness)
 python scripts/evaluate.py
 
+# Evaluate a specific detector (YOLO models only -- uses Ultralytics .val())
+python scripts/evaluate.py --model specialist
+
 # Skip lighting robustness (faster)
 python scripts/evaluate.py --skip_lighting
 
 # Classifier only
 python scripts/evaluate.py --skip_detector
+```
+
+### Comparing detectors fairly
+
+Ultralytics `.val()` and supervision's mAP are different implementations, so
+numbers from `evaluate.py` must not be compared against RF-DETR results. Use
+`compare_detectors.py`, which scores every model on the same images with the same
+metric and threshold:
+
+```bash
+# Compare all available models
+python scripts/compare_detectors.py \
+    --images data/detector/images/test --labels data/detector/labels/test
+
+# Specific models, excluding the MTech annotation outlier
+python scripts/compare_detectors.py --images DIR --labels DIR \
+    --models generalist_yolo generalist_rfdetr --exclude-mtech
+```
+
+Example output on the 43-image MTech test set — the specialist wins on its home
+turf, `generalist_yolo`'s module score collapses on this annotation convention,
+and RF-DETR degrades gracefully:
+
+```
+model                     mAP50   mAP50-95   module   busbar
+specialist                0.840      0.581    0.871    0.860
+generalist_rfdetr         0.541      0.288    0.543    0.558
+generalist_yolo           0.195      0.112    0.047    0.347
 ```
 
 ---
