@@ -26,11 +26,11 @@ Three ways to use it:
            print(d["class"], d["box_xyxy"], d.get("grade"))
 
 2. As a CLI returning JSON (pipe into anything):
-       python scripts/inference_api.py --input photo.jpg
-       python scripts/inference_api.py --input photo.jpg --json_only > result.json
+       python scripts/inference/inference_api.py --input photo.jpg
+       python scripts/inference/inference_api.py --input photo.jpg --json_only > result.json
 
 3. As a local HTTP service (POST an image, get JSON back):
-       python scripts/inference_api.py --serve --port 8000
+       python scripts/inference/inference_api.py --serve --port 8000
        curl -F image=@photo.jpg http://localhost:8000/infer
 """
 
@@ -48,9 +48,11 @@ import torch.nn as nn
 from PIL import Image
 from torchvision import models, transforms
 
-from model_zoo import load_detector as load_zoo_detector, MODEL_REGISTRY, DEFAULT_MODEL
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from common.model_zoo import load_detector as load_zoo_detector, MODEL_REGISTRY, DEFAULT_MODEL
 
-ROOT               = Path(__file__).resolve().parent.parent
+ROOT               = Path(__file__).resolve().parents[2]
 DETECTOR_WEIGHTS   = MODEL_REGISTRY[DEFAULT_MODEL].weights
 CLASSIFIER_WEIGHTS = ROOT / "models" / "classifier_resnet18" / "resnet18_binary.pth"
 CLASS_MAP_PATH     = ROOT / "models" / "classifier_resnet18" / "class_map.json"
@@ -216,7 +218,7 @@ def main():
     args = ap.parse_args()
 
     if args.list_models:
-        from model_zoo import list_models
+        from common.model_zoo import list_models
         print(list_models())
         return
 

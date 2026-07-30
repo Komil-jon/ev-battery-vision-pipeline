@@ -15,8 +15,8 @@ per-image latency, plus file size — the deployment trade-off table reviewers
 asked for.
 
 Usage:
-    python scripts/benchmark_detector_cpu.py
-    python scripts/benchmark_detector_cpu.py --skip_map    # latency + size only
+    python scripts/eval/benchmark_detector_cpu.py
+    python scripts/eval/benchmark_detector_cpu.py --skip_map    # latency + size only
 Requires: pip install onnx onnxruntime onnxslim
 """
 
@@ -26,7 +26,7 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT    = Path(__file__).resolve().parent.parent
+ROOT    = Path(__file__).resolve().parents[2]
 WEIGHTS = ROOT / "models" / "detector" / "specialist_yolov8n" / "weights" / "best.pt"
 YAML    = ROOT / "dataset.yaml"
 TEST_IMGS = ROOT / "data" / "detector" / "images" / "test"

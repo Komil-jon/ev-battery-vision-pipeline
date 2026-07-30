@@ -25,9 +25,9 @@ Reports AUROC plus good/bad recall on the real-only test set, next to the
 supervised classifier for comparison.
 
 Usage:
-    python scripts/anomaly_condition.py                      # ResNet18 features
-    python scripts/anomaly_condition.py --backbone dinov2    # DINOv2 features
-    python scripts/anomaly_condition.py --quantile 0.99      # stricter threshold
+    python scripts/inference/anomaly_condition.py                      # ResNet18 features
+    python scripts/inference/anomaly_condition.py --backbone dinov2    # DINOv2 features
+    python scripts/inference/anomaly_condition.py --quantile 0.99      # stricter threshold
 """
 
 import argparse
@@ -39,7 +39,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
 
-ROOT      = Path(__file__).resolve().parent.parent
+ROOT      = Path(__file__).resolve().parents[2]
 TRAIN_DIR = ROOT / "data" / "classifier" / "train"
 TEST_DIR  = ROOT / "data" / "classifier" / "test"
 

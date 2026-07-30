@@ -11,7 +11,7 @@ detection annotations do not carry. Workflow:
 
   1. Bootstrap a condition CSV using the trained classifier on every GT module
      box (NOT detector output — the ablation must not inherit detector errors):
-         python scripts/build_singlestage_dataset.py --bootstrap
+         python scripts/data_prep/build_singlestage_dataset.py --bootstrap
      → data/detector_singlestage/condition_labels.csv
        (columns: split, image_stem, box_index, p_bad, condition)
 
@@ -20,7 +20,7 @@ detection annotations do not carry. Workflow:
      a pre-annotation to speed you up, not ground truth.
 
   3. Emit the 3-class dataset:
-         python scripts/build_singlestage_dataset.py --build
+         python scripts/data_prep/build_singlestage_dataset.py --build
      → data/detector_singlestage/{images,labels}/{train,val,test}/
        + dataset_singlestage.yaml
 
@@ -37,7 +37,7 @@ import json
 import shutil
 from pathlib import Path
 
-ROOT     = Path(__file__).resolve().parent.parent
+ROOT     = Path(__file__).resolve().parents[2]
 DET_IMGS = ROOT / "data" / "detector" / "images"
 DET_LABS = ROOT / "data" / "detector" / "labels"
 OUT_ROOT = ROOT / "data" / "detector_singlestage"

@@ -12,9 +12,9 @@ variable is the architecture. Metrics are reported on the real-only test set,
 plus single-image CPU latency and parameter counts for the deployment argument.
 
 Usage:
-    python scripts/benchmark_classifiers.py                    # all backbones, 30 epochs
-    python scripts/benchmark_classifiers.py --epochs 10        # quick pass
-    python scripts/benchmark_classifiers.py --models resnet18 mobilenet_v3_small
+    python scripts/eval/benchmark_classifiers.py                    # all backbones, 30 epochs
+    python scripts/eval/benchmark_classifiers.py --epochs 10        # quick pass
+    python scripts/eval/benchmark_classifiers.py --models resnet18 mobilenet_v3_small
 Results are printed as a markdown table and saved to outputs/classifier_benchmark.csv
 """
 
@@ -29,7 +29,7 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
 from sklearn.metrics import accuracy_score, f1_score
 
-ROOT      = Path(__file__).resolve().parent.parent
+ROOT      = Path(__file__).resolve().parents[2]
 TRAIN_DIR = ROOT / "data" / "classifier" / "train"
 TEST_DIR  = ROOT / "data" / "classifier" / "test"
 OUT_CSV   = ROOT / "outputs" / "classifier_benchmark.csv"

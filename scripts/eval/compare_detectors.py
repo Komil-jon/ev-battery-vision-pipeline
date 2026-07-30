@@ -13,9 +13,9 @@ the aggregate otherwise. See CHANGELOG.md 2026-07-24.
 Requires: pip install supervision  (plus rfdetr if comparing an RF-DETR model)
 
 Usage:
-    python scripts/compare_detectors.py --images DIR --labels DIR
-    python scripts/compare_detectors.py --images DIR --labels DIR --exclude-mtech
-    python scripts/compare_detectors.py --images DIR --labels DIR \
+    python scripts/eval/compare_detectors.py --images DIR --labels DIR
+    python scripts/eval/compare_detectors.py --images DIR --labels DIR --exclude-mtech
+    python scripts/eval/compare_detectors.py --images DIR --labels DIR \
         --models specialist generalist_yolo generalist_rfdetr
 """
 
@@ -88,7 +88,7 @@ def main():
 
     import numpy as np
     import supervision as sv
-    from model_zoo import MODEL_REGISTRY, load_detector
+    from common.model_zoo import MODEL_REGISTRY, load_detector
 
     names = args.models or [n for n, i in MODEL_REGISTRY.items() if i.weights.exists()]
     if not names:

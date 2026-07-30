@@ -21,8 +21,8 @@ Inputs  : data/classifier/{train,test}/{good,bad}/  (existing real crops, pooled
 Outputs : data/classifier/{train,test}/{good,bad}/  (rebuilt to target scale)
 
 Usage:
-    python scripts/build_classifier_dataset.py
-    python scripts/build_classifier_dataset.py --test_good 34 --test_bad 14
+    python scripts/data_prep/build_classifier_dataset.py
+    python scripts/data_prep/build_classifier_dataset.py --test_good 34 --test_bad 14
 """
 
 import argparse
@@ -33,7 +33,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-ROOT     = Path(__file__).resolve().parent.parent
+ROOT     = Path(__file__).resolve().parents[2]
 CLS_ROOT = ROOT / "data" / "classifier"
 IMG_EXT  = {".jpg", ".jpeg", ".png", ".bmp"}
 SEED     = 42

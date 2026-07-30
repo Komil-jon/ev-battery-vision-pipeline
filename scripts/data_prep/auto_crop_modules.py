@@ -11,7 +11,7 @@ Instead of manually finding crops, this script:
 4. You then just drag them into good/ or bad/ folders
 
 Usage:
-    python scripts/auto_crop_modules.py
+    python scripts/data_prep/auto_crop_modules.py
 """
 
 import cv2
@@ -19,7 +19,7 @@ import shutil
 from pathlib import Path
 from ultralytics import YOLO
 
-ROOT             = Path(__file__).resolve().parent.parent
+ROOT             = Path(__file__).resolve().parents[2]
 DETECTOR_WEIGHTS = ROOT / "models" / "detector" / "baseline_yolov8n_stage1" / "weights" / "best.pt"
 IMAGES_DIR       = ROOT / "data" / "detector" / "images" / "train"
 TO_SORT_DIR      = ROOT / "data" / "classifier" / "to_sort"

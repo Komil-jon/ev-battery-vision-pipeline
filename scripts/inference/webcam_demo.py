@@ -11,9 +11,9 @@ Controls (while the video window is focused):
   s  — save the current annotated frame to outputs/results/
 
 Usage:
-    python scripts/webcam_demo.py
-    python scripts/webcam_demo.py --camera 1 --conf 0.21 --imgsz 640
-    python scripts/webcam_demo.py --input demo.mp4        # run on a video file
+    python scripts/inference/webcam_demo.py
+    python scripts/inference/webcam_demo.py --camera 1 --conf 0.21 --imgsz 640
+    python scripts/inference/webcam_demo.py --input demo.mp4        # run on a video file
 
 macOS note: the terminal app you launch this from needs camera permission
 (System Settings -> Privacy & Security -> Camera -> enable your terminal).
@@ -33,7 +33,9 @@ from pipeline_inference import (
     CLASSIFIER_TRANSFORM, GRADE_COLOURS,
     DETECTOR_WEIGHTS, CLASSIFIER_WEIGHTS, CLASS_MAP_PATH, OUTPUT_DIR,
 )
-from model_zoo import load_detector as load_zoo_detector, MODEL_REGISTRY, DEFAULT_MODEL, list_models
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from common.model_zoo import load_detector as load_zoo_detector, MODEL_REGISTRY, DEFAULT_MODEL, list_models
 
 
 def process_frame(frame, detector, classifier, bad_idx, conf, imgsz, crop_padding=10):

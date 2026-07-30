@@ -16,11 +16,11 @@ remaps classes to the project scheme (0=module, 1=busbar) using the mapping you
 provide via --class_map (same idea as scripts/remap_labels.py).
 
 Usage:
-    python scripts/download_external_datasets.py --dry_run              # show plan only
-    python scripts/download_external_datasets.py --zenodo
-    python scripts/download_external_datasets.py --roboflow machine-iimx4/ev-battery-iceh6 --api_key KEY
+    python scripts/data_prep/download_external_datasets.py --dry_run              # show plan only
+    python scripts/data_prep/download_external_datasets.py --zenodo
+    python scripts/data_prep/download_external_datasets.py --roboflow machine-iimx4/ev-battery-iceh6 --api_key KEY
     # After inspecting data/external/<name>/data.yaml:
-    python scripts/download_external_datasets.py --merge data/external/zenodo --class_map "2:0,5:1"
+    python scripts/data_prep/download_external_datasets.py --merge data/external/zenodo --class_map "2:0,5:1"
 """
 
 import argparse
@@ -29,7 +29,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-ROOT         = Path(__file__).resolve().parent.parent
+ROOT         = Path(__file__).resolve().parents[2]
 EXTERNAL_DIR = ROOT / "data" / "external"
 
 ZENODO_RECORD = "19818270"
@@ -68,7 +68,7 @@ def download_zenodo(dry_run: bool):
         urllib.request.urlretrieve(url, out)
 
     print("\nDone. Unzip the archives, read the dataset README for the class scheme,")
-    print("then merge with:  python scripts/download_external_datasets.py --merge "
+    print("then merge with:  python scripts/data_prep/download_external_datasets.py --merge "
           f"{dest.relative_to(ROOT)} --class_map 'SRC:DST,...'")
 
 

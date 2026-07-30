@@ -20,7 +20,7 @@ proper calibration split needs the larger dataset described in
 docs/IMPROVING_ACCURACY.md.
 
 Usage:
-    python scripts/calibrate_classifier.py
+    python scripts/eval/calibrate_classifier.py
 """
 
 import json
@@ -32,7 +32,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
 
-ROOT      = Path(__file__).resolve().parent.parent
+ROOT      = Path(__file__).resolve().parents[2]
 TEST_DIR  = ROOT / "data" / "classifier" / "test"
 WEIGHTS   = ROOT / "models" / "classifier_resnet18" / "resnet18_binary.pth"
 CLASS_MAP = ROOT / "models" / "classifier_resnet18" / "class_map.json"
