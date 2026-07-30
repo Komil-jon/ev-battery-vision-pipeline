@@ -9,6 +9,39 @@ and the measured result where relevant. Maintained across work sessions.
 
 ---
 
+## 2026-07-30
+
+### Model zoo: all three detectors selectable with `--model`
+- Added `scripts/model_zoo.py`, a registry of every trained detector plus a thin
+  wrapper giving YOLO and RF-DETR the same `.predict()` interface. Every entry point
+  (`pipeline_inference`, `webcam_demo`, `inference_api`, `evaluate`) now takes
+  `--model {specialist,generalist_yolo,generalist_rfdetr}` and `--list-models`.
+- **Weights now in the repo:** `models/detector/generalist_yolo11n/weights/best.pt`
+  (5 MB, committed). The RF-DETR checkpoint is 115 MB, over GitHub's 100 MB limit, so
+  it is gitignored with fetch/retrain instructions in
+  `models/detector/generalist_rfdetr/README.md`.
+- **Per-model default confidence (0.21 / 0.10 / 0.30).** Found while testing: the
+  paper's 0.21 (tuned for the specialist) returns almost nothing from the generalist
+  (0 boxes at 0.21, 22 at 0.05 on a Tesla/MTech image). Confidence scores are not
+  comparable across models, so each carries its own suggested threshold, applied
+  unless the user passes `--conf`. The generalist/RF-DETR values are starting points,
+  not F1-tuned.
+- **`scripts/compare_detectors.py`** scores any set of models on identical images with
+  identical supervision mAP (Ultralytics `.val()` is a different implementation and
+  must not be compared against RF-DETR numbers). It converts polygon labels to boxes
+  rather than dropping them, the bug that produced the bogus 0.724 on 2026-07-24.
+- Tool validated by reproducing known numbers on the 43-image MTech test set:
+  | model | mAP50 | mAP50-95 | module | busbar |
+  |---|---|---|---|---|
+  | specialist | 0.840 | 0.581 | 0.871 | 0.860 |
+  | generalist_rfdetr | 0.541 | 0.288 | 0.543 | 0.558 |
+  | generalist_yolo | 0.195 | 0.112 | 0.047 | 0.347 |
+  Specialist 0.840 matches the paper's 0.818; generalist_yolo's module 0.047 matches
+  the 0.043 collapse measured on 2026-07-21. Independent confirmation that the
+  specialist wins in-domain while RF-DETR degrades gracefully out-of-convention.
+- `evaluate.py` refuses RF-DETR with a message pointing at `compare_detectors.py`,
+  since it relies on Ultralytics `.val()`.
+
 ## 2026-07-24
 
 ### RETRACTED then CORRECTED: RF-DETR "win" was a label-dropping bug
