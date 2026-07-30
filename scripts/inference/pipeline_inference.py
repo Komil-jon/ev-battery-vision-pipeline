@@ -17,13 +17,13 @@ Confidence threshold:
 
 Usage:
     # Single image
-    python scripts/pipeline_inference.py --input path/to/image.jpg
+    python scripts/inference/pipeline_inference.py --input path/to/image.jpg
 
     # Folder of images
-    python scripts/pipeline_inference.py --input path/to/folder/
+    python scripts/inference/pipeline_inference.py --input path/to/folder/
 
     # Custom confidence threshold
-    python scripts/pipeline_inference.py --input image.jpg --conf 0.30
+    python scripts/inference/pipeline_inference.py --input image.jpg --conf 0.30
 """
 
 import argparse
@@ -37,11 +37,13 @@ import torch.nn as nn
 from PIL import Image
 from torchvision import models, transforms
 
-from model_zoo import load_detector as load_zoo_detector, MODEL_REGISTRY, DEFAULT_MODEL, list_models
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from common.model_zoo import load_detector as load_zoo_detector, MODEL_REGISTRY, DEFAULT_MODEL, list_models
 
 
 # ── paths ──────────────────────────────────────────────────────────────────────
-ROOT             = Path(__file__).resolve().parent.parent
+ROOT             = Path(__file__).resolve().parents[2]
 DETECTOR_WEIGHTS = MODEL_REGISTRY[DEFAULT_MODEL].weights  # kept for other scripts that import this
 CLASSIFIER_WEIGHTS = ROOT / "models" / "classifier_resnet18" / "resnet18_binary.pth"
 CLASS_MAP_PATH   = ROOT / "models" / "classifier_resnet18" / "class_map.json"

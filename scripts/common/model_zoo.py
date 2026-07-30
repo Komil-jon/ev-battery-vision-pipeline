@@ -26,7 +26,7 @@ See CHANGELOG.md (2026-07-21 to 2026-07-24 entries) for the full evaluation hist
 from dataclasses import dataclass
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 
 CLASS_NAMES = {0: "module", 1: "busbar"}
 

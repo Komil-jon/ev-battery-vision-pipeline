@@ -21,9 +21,9 @@ Variants whose names indicate overlap with the MTech training source
 "unseen" average so the number is honest.
 
 Usage:
-    python scripts/eval_cross_variant.py                 # all variants
-    python scripts/eval_cross_variant.py --conf 0.25 --max_per_variant 40
-    python scripts/eval_cross_variant.py --save_annotated   # write example overlays
+    python scripts/eval/eval_cross_variant.py                 # all variants
+    python scripts/eval/eval_cross_variant.py --conf 0.25 --max_per_variant 40
+    python scripts/eval/eval_cross_variant.py --save_annotated   # write example overlays
 """
 
 import argparse
@@ -32,7 +32,7 @@ from pathlib import Path
 
 import cv2
 
-ROOT      = Path(__file__).resolve().parent.parent
+ROOT      = Path(__file__).resolve().parents[2]
 WEIGHTS   = ROOT / "models" / "detector" / "specialist_yolov8n" / "weights" / "best.pt"
 ZENODO    = (ROOT / "data" / "external" / "zenodo_ev_circularity" /
              "Battery Image Dataset" / "images")

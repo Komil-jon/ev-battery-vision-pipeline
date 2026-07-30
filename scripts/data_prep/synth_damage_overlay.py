@@ -19,9 +19,9 @@ data/classifier/train/bad/ (keep synthetic ≤50% of the class) and always
 evaluate on the real-only test set.
 
 Usage:
-    python scripts/synth_damage_overlay.py                 # 4 variants per good crop
-    python scripts/synth_damage_overlay.py --n_per_image 8
-    python scripts/synth_damage_overlay.py --preview       # write a 3x3 contact sheet only
+    python scripts/data_prep/synth_damage_overlay.py                 # 4 variants per good crop
+    python scripts/data_prep/synth_damage_overlay.py --n_per_image 8
+    python scripts/data_prep/synth_damage_overlay.py --preview       # write a 3x3 contact sheet only
 """
 
 import argparse
@@ -31,7 +31,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-ROOT     = Path(__file__).resolve().parent.parent
+ROOT     = Path(__file__).resolve().parents[2]
 GOOD_DIR = ROOT / "data" / "classifier" / "train" / "good"
 # Deliberately OUTSIDE train/ — ImageFolder(train/) must only ever see good/ and
 # bad/, otherwise a third folder becomes a third class.

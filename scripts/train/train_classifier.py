@@ -19,8 +19,8 @@ Dataset structure expected:
             bad/
 
 Usage:
-    python scripts/train_classifier.py
-    python scripts/train_classifier.py --epochs 30 --batch 8
+    python scripts/train/train_classifier.py
+    python scripts/train/train_classifier.py --epochs 30 --batch 8
 """
 
 import argparse
@@ -37,7 +37,7 @@ from sklearn.metrics import (
 
 
 # ── paths ──────────────────────────────────────────────────────────────────────
-ROOT           = Path(__file__).resolve().parent.parent
+ROOT           = Path(__file__).resolve().parents[2]
 TRAIN_DIR      = ROOT / "data" / "classifier" / "train"
 TEST_DIR       = ROOT / "data" / "classifier" / "test"
 SAVE_DIR       = ROOT / "models" / "classifier_resnet18"

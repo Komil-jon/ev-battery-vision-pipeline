@@ -12,7 +12,7 @@ This gives you a real labelled EV battery dataset with both Battery Module
 and Bus-bar annotations — the closest public equivalent to the paper's dataset.
 
 Usage:
-    python scripts/download_dataset.py --api_key YOUR_ROBOFLOW_API_KEY
+    python scripts/data_prep/download_dataset.py --api_key YOUR_ROBOFLOW_API_KEY
 
 Get a free API key at: https://roboflow.com  (no credit card needed)
 """
@@ -21,7 +21,7 @@ import argparse
 import shutil
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def download(api_key: str, version: int = 1):
@@ -73,7 +73,7 @@ def download(api_key: str, version: int = 1):
 
     print("\nDataset ready. Review class IDs in the label files and update dataset.yaml if needed.")
     print("Roboflow class order may differ from paper (module=0, busbar=1).")
-    print("Check with:  python scripts/download_dataset.py --check_classes")
+    print("Check with:  python scripts/data_prep/download_dataset.py --check_classes")
 
 
 def check_classes():
@@ -114,7 +114,7 @@ def main():
             "Roboflow API key required.\n"
             "1. Sign up free at https://roboflow.com\n"
             "2. Get your key from https://app.roboflow.com/settings/api\n"
-            "3. Run:  python scripts/download_dataset.py --api_key YOUR_KEY\n\n"
+            "3. Run:  python scripts/data_prep/download_dataset.py --api_key YOUR_KEY\n\n"
             "Alternatively, download manually from:\n"
             "https://universe.roboflow.com/mtech-project-ohj8a/ev-battery-pack\n"
             "and place images in data/detector/images/{train,val,test}/\n"

@@ -14,9 +14,9 @@ Outputs (train-only; never touches val/test):
     data/detector/labels/train_copy_paste/*.txt
 
 Usage:
-    python scripts/synth_copy_paste.py --n_images 300
-    python scripts/synth_copy_paste.py --n_images 300 --busbar_only   # minority-class boost
-    python scripts/synth_copy_paste.py --glare --n_images 200         # glare-robustness pass
+    python scripts/data_prep/synth_copy_paste.py --n_images 300
+    python scripts/data_prep/synth_copy_paste.py --n_images 300 --busbar_only   # minority-class boost
+    python scripts/data_prep/synth_copy_paste.py --glare --n_images 200         # glare-robustness pass
 """
 
 import argparse
@@ -26,7 +26,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-ROOT       = Path(__file__).resolve().parent.parent
+ROOT       = Path(__file__).resolve().parents[2]
 TRAIN_IMGS = ROOT / "data" / "detector" / "images" / "train"
 TRAIN_LABS = ROOT / "data" / "detector" / "labels" / "train"
 OUT_IMGS   = ROOT / "data" / "detector" / "images" / "train_copy_paste"

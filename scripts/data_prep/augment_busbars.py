@@ -18,8 +18,8 @@ Augmentation strategy matches paper:
   - NO destructive transforms
 
 Usage:
-    python scripts/augment_busbars.py
-    python scripts/augment_busbars.py --n_augments 8 --output_dir data/detector/images/train_augmented
+    python scripts/data_prep/augment_busbars.py
+    python scripts/data_prep/augment_busbars.py --n_augments 8 --output_dir data/detector/images/train_augmented
 """
 
 import argparse
@@ -32,7 +32,7 @@ import numpy as np
 
 
 # ── paths ──────────────────────────────────────────────────────────────────────
-ROOT       = Path(__file__).resolve().parent.parent
+ROOT       = Path(__file__).resolve().parents[2]
 TRAIN_IMGS = ROOT / "data" / "detector" / "images" / "train"
 TRAIN_LABS = ROOT / "data" / "detector" / "labels" / "train"
 AUG_IMGS   = ROOT / "data" / "detector" / "images" / "train_busbar_aug"

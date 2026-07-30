@@ -6,9 +6,9 @@ Two-stage YOLOv8n training pipeline replicating the paper:
   - Stage 2: Fine-tune with busbar recall-boost augmentation (30 epochs, 768px, AdamW)
 
 Usage:
-    python scripts/train_detector.py --stage 1
-    python scripts/train_detector.py --stage 2
-    python scripts/train_detector.py --stage all
+    python scripts/train/train_detector.py --stage 1
+    python scripts/train/train_detector.py --stage 2
+    python scripts/train/train_detector.py --stage all
 """
 
 import argparse
@@ -17,7 +17,7 @@ from ultralytics import YOLO
 
 
 # ── paths ──────────────────────────────────────────────────────────────────────
-ROOT         = Path(__file__).resolve().parent.parent
+ROOT         = Path(__file__).resolve().parents[2]
 DATASET_YAML = ROOT / "dataset.yaml"
 MODELS_DIR   = ROOT / "models" / "detector"
 STAGE1_NAME  = "baseline_yolov8n_stage1"
@@ -68,7 +68,7 @@ def train_stage2():
     if not checkpoint.exists():
         raise FileNotFoundError(
             f"Stage 1 checkpoint not found at {checkpoint}.\n"
-            "Run Stage 1 first:  python scripts/train_detector.py --stage 1"
+            "Run Stage 1 first:  python scripts/train/train_detector.py --stage 1"
         )
 
     print("\n=== STAGE 2: Busbar recall-boost fine-tuning ===")

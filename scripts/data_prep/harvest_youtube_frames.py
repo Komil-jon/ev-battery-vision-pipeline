@@ -23,8 +23,8 @@ Pipeline per video:
      before ever merging into data/detector/ train (never into val/test).
 
 Usage:
-    python scripts/harvest_youtube_frames.py --urls URL [URL ...]
-    python scripts/harvest_youtube_frames.py --urls URL --interval 3 --min_conf 0.4
+    python scripts/data_prep/harvest_youtube_frames.py --urls URL [URL ...]
+    python scripts/data_prep/harvest_youtube_frames.py --urls URL --interval 3 --min_conf 0.4
 """
 
 import argparse
@@ -36,7 +36,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-ROOT    = Path(__file__).resolve().parent.parent
+ROOT    = Path(__file__).resolve().parents[2]
 WEIGHTS = ROOT / "models" / "detector" / "specialist_yolov8n" / "weights" / "best.pt"
 OUT_DIR = ROOT / "data" / "youtube_harvest" / "review"
 

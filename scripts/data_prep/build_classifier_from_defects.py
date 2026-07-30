@@ -26,10 +26,10 @@ Outputs (kept OUT of train/ so nothing auto-pollutes; review then merge):
     data/classifier/auto/bad/*.jpg
 
 Usage:
-    python scripts/build_classifier_from_defects.py
-    python scripts/build_classifier_from_defects.py --conf 0.15 --preview
+    python scripts/data_prep/build_classifier_from_defects.py
+    python scripts/data_prep/build_classifier_from_defects.py --conf 0.15 --preview
     # then, after reviewing, merge a curated subset into training:
-    python scripts/build_classifier_from_defects.py --merge --max_per_class 200
+    python scripts/data_prep/build_classifier_from_defects.py --merge --max_per_class 200
 """
 
 import argparse
@@ -41,7 +41,7 @@ import cv2
 import numpy as np
 import torch
 
-ROOT     = Path(__file__).resolve().parent.parent
+ROOT     = Path(__file__).resolve().parents[2]
 DEFECT   = ROOT / "data" / "external" / "roboflow_ue_d1_defect_detection"
 DETECTOR = ROOT / "models" / "detector" / "specialist_yolov8n" / "weights" / "best.pt"
 OUT_GOOD = ROOT / "data" / "classifier" / "auto" / "good"
@@ -172,7 +172,7 @@ def run(conf, pad, preview):
     if preview and (n_good or n_bad):
         _preview()
     print("\nNEXT: review the crops, then merge a curated subset:")
-    print("  python scripts/build_classifier_from_defects.py --merge --max_per_class 200")
+    print("  python scripts/data_prep/build_classifier_from_defects.py --merge --max_per_class 200")
 
 
 def _preview():

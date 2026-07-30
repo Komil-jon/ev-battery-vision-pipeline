@@ -20,9 +20,9 @@ Nothing is deleted. The script writes a list of flagged files so you can review
 them and decide.
 
 Usage:
-    python scripts/audit_dataset.py --images data/detector/images/train \
+    python scripts/data_prep/audit_dataset.py --images data/detector/images/train \
                                     --labels data/detector/labels/train
-    python scripts/audit_dataset.py --images DIR --labels DIR --out outputs/audit
+    python scripts/data_prep/audit_dataset.py --images DIR --labels DIR --out outputs/audit
 """
 
 import argparse

@@ -10,8 +10,8 @@ Runs:
   4. End-to-end propagation table (Table 6 from paper)
 
 Usage:
-    python scripts/evaluate.py
-    python scripts/evaluate.py --skip_lighting   # faster, skips brightness variants
+    python scripts/eval/evaluate.py
+    python scripts/eval/evaluate.py --skip_lighting   # faster, skips brightness variants
 """
 
 import argparse
@@ -35,7 +35,7 @@ from ultralytics import YOLO
 
 
 # ── paths ──────────────────────────────────────────────────────────────────────
-ROOT               = Path(__file__).resolve().parent.parent
+ROOT               = Path(__file__).resolve().parents[2]
 DATASET_YAML       = ROOT / "dataset.yaml"
 DETECTOR_WEIGHTS   = ROOT / "models" / "detector" / "specialist_yolov8n" / "weights" / "best.pt"
 CLASSIFIER_WEIGHTS = ROOT / "models" / "classifier_resnet18" / "resnet18_binary.pth"
@@ -61,7 +61,7 @@ def load_detector(model_name: str = None):
     """Load a detector from the model zoo by name. This evaluator uses Ultralytics'
     .val() for mAP, so it supports the YOLO models only; RF-DETR is evaluated with
     scripts/compare_detectors.py instead."""
-    from model_zoo import MODEL_REGISTRY, DEFAULT_MODEL
+    from common.model_zoo import MODEL_REGISTRY, DEFAULT_MODEL
     name = model_name or DEFAULT_MODEL
     info = MODEL_REGISTRY[name]
     if info.kind != "yolo":
@@ -314,7 +314,7 @@ def main():
     args = parser.parse_args()
 
     if args.list_models:
-        from model_zoo import list_models
+        from common.model_zoo import list_models
         print(list_models())
         return
 

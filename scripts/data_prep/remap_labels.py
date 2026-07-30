@@ -27,14 +27,14 @@ only classes 0/1 it is treated as already-remapped and skipped (re-run a backup
 restore first if you need to remap from scratch).
 
 Usage:
-    python scripts/remap_labels.py            # remap train/val/test in place
-    python scripts/remap_labels.py --dry_run  # report only, change nothing
+    python scripts/data_prep/remap_labels.py            # remap train/val/test in place
+    python scripts/data_prep/remap_labels.py --dry_run  # report only, change nothing
 """
 
 import argparse
 from pathlib import Path
 
-ROOT       = Path(__file__).resolve().parent.parent
+ROOT       = Path(__file__).resolve().parents[2]
 LABELS_DIR = ROOT / "data" / "detector" / "labels"
 SPLITS     = ["train", "val", "test"]
 

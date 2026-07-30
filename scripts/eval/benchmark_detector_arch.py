@@ -14,8 +14,8 @@ budget, so the comparison is fair; absolute numbers will be below the shipped
 model's.
 
 Usage:
-    python scripts/benchmark_detector_arch.py                     # v8n vs 11n, 40 epochs
-    python scripts/benchmark_detector_arch.py --epochs 60 --models yolov8n yolo11n yolov8s
+    python scripts/eval/benchmark_detector_arch.py                     # v8n vs 11n, 40 epochs
+    python scripts/eval/benchmark_detector_arch.py --epochs 60 --models yolov8n yolo11n yolov8s
 Results printed as a markdown table + saved to outputs/detector_arch_benchmark.csv
 """
 
@@ -26,7 +26,7 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT    = Path(__file__).resolve().parent.parent
+ROOT    = Path(__file__).resolve().parents[2]
 OUT_DIR = ROOT / "models" / "detector" / "arch_benchmark"
 CSV_OUT = ROOT / "outputs" / "detector_arch_benchmark.csv"
 TEST_IMGS = ROOT / "data" / "detector" / "images" / "test"

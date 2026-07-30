@@ -18,10 +18,10 @@ Lines that are already polygons are copied through untouched.
 
 Usage:
     # look at 12 converted images before committing to anything
-    python scripts/boxes_to_masks_sam.py --images DIR --labels DIR --preview --limit 12
+    python scripts/data_prep/boxes_to_masks_sam.py --images DIR --labels DIR --preview --limit 12
 
     # convert a split into a NEW label dir (never overwrites the originals)
-    python scripts/boxes_to_masks_sam.py --images data/detector/images/train \
+    python scripts/data_prep/boxes_to_masks_sam.py --images data/detector/images/train \
         --labels data/detector/labels/train --out data/detector/labels_seg/train
 """
 
