@@ -49,3 +49,13 @@ models/detector/arch_benchmark/
 
 # RF-DETR checkpoint exceeds GitHub's 100MB limit -- fetch separately
 models/detector/generalist_rfdetr/weights/*.pth
+
+# Ultralytics training-batch mosaics (regenerable augmentation previews)
+models/**/train_batch*.jpg
+models/**/val_batch*.jpg
+# Pretrained base checkpoints (auto-downloaded by ultralytics on first use)
+yolov8n.pt
+yolo11n.pt
+yolov8s-worldv2.pt
+sam2.1_b.pt
+mobile_sam.pt
