@@ -169,24 +169,40 @@ implying full grasp planning.
 
 ## Prior art: does an EV battery segmentation model already exist? (searched 2026-07-30)
 
-Short answer: **nothing we can drop in.** Closest existing work:
+**No. Every public EV-battery dataset is object detection (boxes).** Searching
+Roboflow Universe for "ev battery" returns these, and the only one tagged
+segmentation is for cables:
 
-| Source | What it is | Why it doesn't replace this project |
+| EV battery dataset (Roboflow) | Images | Task | Classes |
+|---|---|---|---|
+| EV Battery Component Detection | 1,360 | Object Detection | BMS_Unit, **Busbars**, Coolant_tubes, battery_module, battery_tray, fasteners… |
+| Ev Battery Components | 1,010 | Object Detection | nut, b_casing, battery_module, bms_unit, **busbar**, connector, cables |
+| EV battery (Machine) | 643 | Object Detection | unnamed 0–8 |
+| EV Battery pack (MTech) | 145 | Object Detection | Battery Module, **Bus-bar**, Bolt, Nut, Screw… |
+| EV Battery Sample | 94 | Object Detection | Battery_Module, **Busbar**, Cooling_Channel… |
+| **validation Ev battery** | 85 | **Semantic Segmentation** | `evcable` — **cables only, not modules/busbars** |
+
+We already hold most of these in `data/external/`.
+
+Academic systems are detection-based too, and all single-rig:
+
+| Work | What | Limit |
 |---|---|---|
-| [battery project 101](https://universe.roboflow.com/sivarish04workspace/battery-project-101) (Roboflow, CC BY 4.0) | 1,357 imgs, instance seg, **99.2% mAP50**. Classes: battery-lid, battery-outer, bms, cell-cover, cells, cooling-plate, heat-plate, metal-plate | Pack-teardown classes, **no busbar**. 99.2% on 1.4k images almost certainly means near-duplicate frames of one battery — the same single-facility trap we already measured (specialist 0.818 in-domain → 0.277 cross-facility) |
-| `battery A,B` / `leekihwa` / `daeun` (Roboflow) | 104–210 imgs, instance seg. Classes `04_bar_top1 … 08_bar_low`, `09_module_box`, `02_bolt_m6` | **Closest class scheme we found (bars = busbars, module_box)** but tiny and a single fixed rig. Usable as *extra* data, not as a model |
-| [Battery Screw Detection](https://universe.roboflow.com/) | 407 imgs, screw types | Different task |
-| [RAPID](https://arxiv.org/abs/2603.18520v1) (2026) | Open-vocab detection, **0.9757 mAP50** on screws/nuts/busbars, RGB-D, open-source platform | Detection not segmentation; single cell/rig. See the grasp numbers below — they are the important part |
-| [Computer vision for industrial Li-ion module disassembly](https://link.springer.com/article/10.1007/s11740-023-01231-5) (Springer) | Instance segmentation + point-cloud registration, **demonstrated grasping busbars** | Paywalled, no public model/dataset; single module type |
-| [Robotised disassembly review](https://www.sciencedirect.com/science/article/pii/S0278612524001109) | Systematic literature review | Confirms no general cross-pack-type model |
+| [RAPID](https://arxiv.org/abs/2603.18520v1) (2026) | Open-vocab **detection**, 0.9757 mAP50 on screws/nuts/busbars, RGB-D | Detection not segmentation; one cell. Its grasp numbers matter more — see below |
+| [Li-ion module disassembly](https://link.springer.com/article/10.1007/s11740-023-01231-5) (Springer) | Instance segmentation + point-cloud registration, **demonstrated grasping busbars** | Paywalled, no public model or dataset, one module type |
+| [Robotised disassembly review](https://www.sciencedirect.com/science/article/pii/S0278612524001109) | Systematic review | Confirms no cross-pack-type model |
 
-**The gap stands:** every published system is trained on one pack type or one rig. A
-segmentation model validated across 10 pack sources is still novel — and our own
-measurements are the evidence that in-domain scores do not transfer.
+Non-EV battery segmentation sets exist (AA cells, 9V, pack-teardown rigs such as
+`battery project 101` at 99.2% mAP50 on 1.4k near-duplicate frames of one battery),
+but they are a different object and their in-domain scores do not transfer — exactly
+the effect we measured ourselves (specialist 0.818 in-domain → 0.277 cross-facility).
 
-**Worth harvesting:** the `bar_*` / `module_box` datasets are the only public
-annotations matching our classes. Check each licence before use, and dedup against
-our data (the Zenodo set already turned out to contain 78 of our MTech images).
+**Consequence:** our own polygon labels — 16,226 masks over module and busbar across
+multiple pack types, sourced from `roboflow_battery_comp` (6,267),
+`roboflow_last_exp4` (3,115), `roboflow_automated-disassembly` (2,600),
+`roboflow_ev-battery-pack-62ig0` (2,116), `edfw3` (825), `ue_rav4_module` (96) — are
+plausibly the largest EV module/busbar segmentation annotation set assembled anywhere.
+Releasing them is a contribution in its own right.
 
 ## From RGB mask to a robot grasp
 
