@@ -167,6 +167,50 @@ implying full grasp planning.
 
 ---
 
+## Prior art: does an EV battery segmentation model already exist? (searched 2026-07-30)
+
+Short answer: **nothing we can drop in.** Closest existing work:
+
+| Source | What it is | Why it doesn't replace this project |
+|---|---|---|
+| [battery project 101](https://universe.roboflow.com/sivarish04workspace/battery-project-101) (Roboflow, CC BY 4.0) | 1,357 imgs, instance seg, **99.2% mAP50**. Classes: battery-lid, battery-outer, bms, cell-cover, cells, cooling-plate, heat-plate, metal-plate | Pack-teardown classes, **no busbar**. 99.2% on 1.4k images almost certainly means near-duplicate frames of one battery — the same single-facility trap we already measured (specialist 0.818 in-domain → 0.277 cross-facility) |
+| `battery A,B` / `leekihwa` / `daeun` (Roboflow) | 104–210 imgs, instance seg. Classes `04_bar_top1 … 08_bar_low`, `09_module_box`, `02_bolt_m6` | **Closest class scheme we found (bars = busbars, module_box)** but tiny and a single fixed rig. Usable as *extra* data, not as a model |
+| [Battery Screw Detection](https://universe.roboflow.com/) | 407 imgs, screw types | Different task |
+| [RAPID](https://arxiv.org/abs/2603.18520v1) (2026) | Open-vocab detection, **0.9757 mAP50** on screws/nuts/busbars, RGB-D, open-source platform | Detection not segmentation; single cell/rig. See the grasp numbers below — they are the important part |
+| [Computer vision for industrial Li-ion module disassembly](https://link.springer.com/article/10.1007/s11740-023-01231-5) (Springer) | Instance segmentation + point-cloud registration, **demonstrated grasping busbars** | Paywalled, no public model/dataset; single module type |
+| [Robotised disassembly review](https://www.sciencedirect.com/science/article/pii/S0278612524001109) | Systematic literature review | Confirms no general cross-pack-type model |
+
+**The gap stands:** every published system is trained on one pack type or one rig. A
+segmentation model validated across 10 pack sources is still novel — and our own
+measurements are the evidence that in-domain scores do not transfer.
+
+**Worth harvesting:** the `bar_*` / `module_box` datasets are the only public
+annotations matching our classes. Check each licence before use, and dedup against
+our data (the Zenodo set already turned out to contain 78 of our MTech images).
+
+## From RGB mask to a robot grasp
+
+A mask alone gives 2D: centroid and in-plane angle. A robot needs 3D. Three ways to
+bridge it, in order of practicality here:
+
+1. **RGB-D camera (recommended).** RealSense / Zivid. The mask crops the point cloud
+   to just that object; from the cropped cloud you get a metric 3D centroid and a
+   surface normal, i.e. an approach vector. This is what the Springer busbar-grasping
+   work and RAPID both do.
+2. **Calibrated RGB + planar assumption (cheapest, and viable here).** Battery packs
+   sit flat on a table or fixture. With a calibrated camera and a known pack-surface
+   height, a 2D mask point back-projects to a unique 3D point. Good enough for
+   top-down picks of parts lying on a known plane; breaks on stacked or tilted parts.
+3. **Monocular depth (Depth Anything V2 etc.).** No extra hardware, but the depth is
+   relative, not metric — scale must be recovered from a known reference. Do not put
+   this in a control loop without validation.
+
+**The honest number to remember:** RAPID reports 0.9757 mAP50 detection, yet
+**one-shot vision-to-grasp succeeded only 57%** of the time. Taught-in poses hit 97%
+and visual servoing 83%. Perception accuracy is not manipulation success — the gap is
+calibration, hand-eye error, occlusion and control. Any claim we make should be about
+perception, with grasping framed as future work unless we actually run a robot.
+
 ## Tooling for the manual work
 
 Use a tool with SAM built in, so most polygons come from a click rather than tracing:
