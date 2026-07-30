@@ -15,7 +15,7 @@ synthetic data methods).
 | 4 | Cascading errors ignored (wa5W) | Already addressed in paper (Tables 5–6, S-H3). No repo action. | Done (paper) |
 | 5 | Small test sets — 54 images / 14 bad crops (WJw8, 2kuK, cJPP) | Merge external data: Zenodo 19-battery-type set (CC BY 4.0) enlarges both splits; diffusion notebook enlarges the bad pool. Report bootstrap CIs meanwhile (see #7). | Tooling ready (`download_external_datasets.py`, Colab notebook); download pending |
 | 6 | End-to-end bad-module identification weak, recall 0.714 (WJw8, cJPP) | **Bad-recall now 0.857 (12/14)** via synthetic damage training; cost-sensitive threshold at 5:1 miss-cost reaches **0.929** (see `calibrate_classifier.py` output). Re-run end-to-end propagation (Table 6) with the new classifier. | Recall improved; Table 6 refresh pending |
-| 7 | Grade A/B/C not calibrated; no reliability curves/CIs/cost analysis (WJw8, 2kuK) | **`scripts/calibrate_classifier.py`**: reliability diagram + ECE (0.284 raw → 0.246 at T=0.55), bootstrap 95% CIs (accuracy [0.667,0.896], wF1 [0.688,0.899], bad-recall [0.643,1.000]), cost-sensitive threshold table (1/5/10/20:1). Key safety finding for the rebuttal: **zero bad modules fall in Grade A** (no false-safe routing) on the improved model. | Done — figures/tables generated |
+| 7 | Grade A/B/C not calibrated; no reliability curves/CIs/cost analysis (WJw8, 2kuK) | **`scripts/eval/calibrate_classifier.py`**: reliability diagram + ECE (0.284 raw → 0.246 at T=0.55), bootstrap 95% CIs (accuracy [0.667,0.896], wF1 [0.688,0.899], bad-recall [0.643,1.000]), cost-sensitive threshold table (1/5/10/20:1). Key safety finding for the rebuttal: **zero bad modules fall in Grade A** (no false-safe routing) on the improved model. | Done — figures/tables generated |
 | 8 | Dataset generality — single facility (WJw8, 2kuK, cJPP) | Zenodo 19-type dataset merge + cross-pack-variant evaluation (train on N-1 variants, test on held-out variant). | Tooling ready; run pending |
 | 9 | Single annotator; wide bootstrap CI (cJPP) | Second-annotator pass on the 54-image test set + Cohen's kappa; CIs now systematically reported (#7). | CIs done; second annotator is a human task |
 | 10 | Busbar condition overclaim in abstract (cJPP) | Wording fix in the manuscript (narrow to "module condition assessment; busbar localisation"), or add a busbar condition model if damage labels can be collected. | Manuscript edit — recommend wording fix |
@@ -45,7 +45,7 @@ hence the bootstrap CIs in `calibrate_classifier.py`.
 
 ### Good-only anomaly detection — the novel-method contribution (real test set)
 
-PatchCore-lite condition scoring (`scripts/anomaly_condition.py`): a memory bank
+PatchCore-lite condition scoring (`scripts/inference/anomaly_condition.py`): a memory bank
 of patch features from **good modules only**, threshold set on the good-training
 score distribution (95th percentile). **Zero damaged examples used in training or
 threshold selection.**
@@ -110,7 +110,7 @@ annotation effort.
 - **DINOv2 linear probe** — DONE. Ties EfficientNet-B0 for top accuracy/F1
   (0.792/0.792), beating the shipped ResNet18 backbone. Candidate replacement
   Stage 2 representation.
-- **Good-only anomaly detection** (`scripts/anomaly_condition.py`,
+- **Good-only anomaly detection** (`scripts/inference/anomaly_condition.py`,
   PatchCore-lite): DONE. DINOv2 patch features lift AUROC 0.60→0.702 and
   bad-recall to 0.857 — matching the supervised model with zero bad examples.
   This is the paper's novel-method contribution.

@@ -57,7 +57,7 @@ Tested on this data:
 | `mobile_sam.pt` | fragmented blobs, unusable |
 | `sam2.1_b.pt` | coherent, usable masks — **use this** |
 
-Tool: `scripts/boxes_to_masks_sam.py` (writes to a new label dir, never overwrites;
+Tool: `scripts/data_prep/boxes_to_masks_sam.py` (writes to a new label dir, never overwrites;
 falls back to keeping the original box when SAM's mask is implausibly small).
 
 **SAM cannot fix a bad box.** If a box covers an arbitrary region of a cell array,
@@ -100,7 +100,7 @@ useful segmentation model?**
 
 ### Phase 1 — Triage the unlabelled (P0)
 ```bash
-python scripts/audit_dataset.py --images data/detector/images/train \
+python scripts/data_prep/audit_dataset.py --images data/detector/images/train \
     --labels data/detector/labels/train --out outputs/audit
 ```
 Open `outputs/audit/ambiguous_unlabelled.jpg` and `anomaly_unlabelled.jpg` and sort
@@ -119,10 +119,10 @@ cause of the persistently weak busbar scores (0.30–0.35 mAP50).
 ### Phase 2 — Box → mask (P1)
 ```bash
 # ALWAYS preview first
-python scripts/boxes_to_masks_sam.py --images data/detector/images/train \
+python scripts/data_prep/boxes_to_masks_sam.py --images data/detector/images/train \
     --labels data/detector/labels/train --preview --limit 20
 # then convert into a NEW directory
-python scripts/boxes_to_masks_sam.py --images data/detector/images/train \
+python scripts/data_prep/boxes_to_masks_sam.py --images data/detector/images/train \
     --labels data/detector/labels/train --out data/detector/labels_seg/train
 ```
 - [ ] Preview and sanity-check on 20 images
@@ -148,7 +148,7 @@ From each mask, derive what a robot consumes:
 rect = cv2.minAreaRect(mask_pts)      # ((cx,cy),(w,h),angle) -> grasp centre + angle
 M    = cv2.moments(mask_pts)          # true centroid, not the box centre
 ```
-- [ ] Extend `scripts/inference_api.py` to emit `polygon`, `centroid`, `angle_deg`,
+- [ ] Extend `scripts/inference/inference_api.py` to emit `polygon`, `centroid`, `angle_deg`,
       `min_area_rect` per instance
 - [ ] Sanity-check angles on busbars at known orientations
 

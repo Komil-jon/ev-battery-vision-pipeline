@@ -94,7 +94,7 @@ test.** This is a DATA problem — fix it with synthetic damage + more real crop
 ## BACKLOG / IDEAS (don't forget, lower priority)
 
 - Copy-paste compositing for busbar only (minority class; the general aug hurt, but
-  busbar-targeted may help) — `scripts/synth_copy_paste.py`.
+  busbar-targeted may help) — `scripts/data_prep/synth_copy_paste.py`.
 - Hyperparameter tuning (`model.tune()`) once the architecture is fixed.
 - Grounding DINO auto-label the unlabeled Zenodo (712) + YouTube frames to grow data.
 - Defect-texture pretraining for ResNet18 (Kaggle coating-defect, Sci.Reports set).
