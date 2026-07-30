@@ -43,7 +43,7 @@ systems are blind to (corrosion, burns, casing cracks, swelling, leakage).
 - severe → Grade C (recycle)
 
 ## Why feasible here
-- `scripts/synth_damage_overlay.py` ALREADY generates corrosion/burn/scratch as
+- `scripts/data_prep/synth_damage_overlay.py` ALREADY generates corrosion/burn/scratch as
   distinct types — the typed labels come for free.
 - The diffusion generator (Colab #2, `colab_defect_inpainting.ipynb`) can synthesize
   typed + severity-varied damage to populate minority classes.

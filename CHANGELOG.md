@@ -37,11 +37,11 @@ and the measured result where relevant. Maintained across work sessions.
   smooth closed pack lids (Laplacian variance is low for flat surfaces, not just for
   out-of-focus shots), and the greyscale images come entirely from two monochrome
   sources (`automated`, `bmw`). Both add robustness; do not delete on the metric alone.
-- 0 degenerate boxes. Tooling: `scripts/audit_dataset.py` (flags + contact sheets,
+- 0 degenerate boxes. Tooling: `scripts/data_prep/audit_dataset.py` (flags + contact sheets,
   deletes nothing).
 
 ### Zenodo dataset: downloaded, but NOT usable for detection as-is
-- `data/external/zenodo_ev_circularity/` = 712 images (697 jpg, 15 jpeg) + 12 videos
+- `data/sources/zenodo_ev_circularity/` = 712 images (697 jpg, 15 jpeg) + 12 videos
   across 19 vehicle types, 5.1 GB. **Zero annotation files of any kind.** "Labelled"
   in its README means folder-level vehicle class — it is a classification dataset.
 - **78 of its images are already in our training data** (exact dHash match, identical
@@ -51,7 +51,7 @@ and the measured result where relevant. Maintained across work sessions.
   human verification, or manual), and the 78 duplicates excluded to avoid leakage.
 
 ### Model zoo: all three detectors selectable with `--model`
-- Added `scripts/model_zoo.py`, a registry of every trained detector plus a thin
+- Added `scripts/common/model_zoo.py`, a registry of every trained detector plus a thin
   wrapper giving YOLO and RF-DETR the same `.predict()` interface. Every entry point
   (`pipeline_inference`, `webcam_demo`, `inference_api`, `evaluate`) now takes
   `--model {specialist,generalist_yolo,generalist_rfdetr}` and `--list-models`.
@@ -65,7 +65,7 @@ and the measured result where relevant. Maintained across work sessions.
   comparable across models, so each carries its own suggested threshold, applied
   unless the user passes `--conf`. The generalist/RF-DETR values are starting points,
   not F1-tuned.
-- **`scripts/compare_detectors.py`** scores any set of models on identical images with
+- **`scripts/eval/compare_detectors.py`** scores any set of models on identical images with
   identical supervision mAP (Ultralytics `.val()` is a different implementation and
   must not be compared against RF-DETR numbers). It converts polygon labels to boxes
   rather than dropping them, the bug that produced the bogus 0.724 on 2026-07-24.
@@ -340,7 +340,7 @@ and the measured result where relevant. Maintained across work sessions.
   test mAP / latency / params. YOLO11n is smaller (2.62M vs 3.16M params).
   Answers the "no architecture comparison" criticism. Result pending.
 
-### Programmable inference API (`scripts/inference_api.py`)
+### Programmable inference API (`scripts/inference/inference_api.py`)
 - `BatteryInspector` class: image in (file path / numpy array / raw bytes) →
   structured dict out. Each detection gives class, confidence, `box_xyxy`,
   `box_xywh`, `center`, normalized `box_norm`, and (modules) `grade` + `p_bad`.
@@ -401,7 +401,7 @@ and the measured result where relevant. Maintained across work sessions.
 - **DINOv2 ViT-S/14 frozen linear probe** added to the classifier benchmark:
   accuracy 0.792 / wF1 0.792, beating the ResNet18 backbone (0.688 / 0.684)
   under the identical protocol.
-- **Good-only anomaly detector** (`scripts/anomaly_condition.py`, PatchCore-lite):
+- **Good-only anomaly detector** (`scripts/inference/anomaly_condition.py`, PatchCore-lite):
   with DINOv2 patch features, AUROC 0.702 and **bad-recall 0.857 using ZERO
   damaged training examples** — matches the supervised model, and by construction
   generalizes to unseen damage types. This is the candidate novel-method
@@ -419,7 +419,7 @@ and the measured result where relevant. Maintained across work sessions.
   EfficientNet-B0 and DINOv2 lead; answers "why ResNet18?".
 - `scripts/benchmark_detector_cpu.py`: PyTorch vs ONNX FP32 vs ONNX INT8.
   **INT8 cuts latency 20% and size 46% for -0.007 mAP50** (44.8 ms, 3.4 MB).
-- `scripts/calibrate_classifier.py`: reliability diagram + ECE (0.284 → 0.246
+- `scripts/eval/calibrate_classifier.py`: reliability diagram + ECE (0.284 → 0.246
   via temperature scaling), bootstrap 95% CIs, cost-sensitive thresholds.
   Key finding: **zero bad modules land in Grade A** (no false-safe routing).
 - `scripts/build_singlestage_dataset.py`: 3-class (module-good / module-bad /
@@ -428,7 +428,7 @@ and the measured result where relevant. Maintained across work sessions.
 
 ### Classifier bad-recall improvement (synthetic damaged crops)
 - Expanded the classifier bad class 40 → 80 crops with procedural damage
-  synthesis (`scripts/synth_damage_overlay.py`; synthetic ≤50% of the class;
+  synthesis (`scripts/data_prep/synth_damage_overlay.py`; synthetic ≤50% of the class;
   test set 100% real).
 - **Result:** bad-class recall **0.571 → 0.857** (exceeds the paper's 0.714),
   weighted F1 0.768 → 0.800, accuracy 0.771 → 0.792. Retrained weights shipped.
@@ -436,11 +436,11 @@ and the measured result where relevant. Maintained across work sessions.
 ### Accuracy/generalization tooling + guide
 - `docs/IMPROVING_ACCURACY.md`: curated external-dataset catalogue + synthetic
   data method guide.
-- `scripts/download_external_datasets.py`: Zenodo / Roboflow download + class-
+- `scripts/data_prep/download_external_datasets.py`: Zenodo / Roboflow download + class-
   remap merge.
-- `scripts/synth_copy_paste.py`: copy-paste compositing (+ synthetic glare pass)
+- `scripts/data_prep/synth_copy_paste.py`: copy-paste compositing (+ synthetic glare pass)
   for the detector, guarded against un-remapped 7-class labels.
-- `scripts/synth_damage_overlay.py`: procedural corrosion/burn/scratch synthesis.
+- `scripts/data_prep/synth_damage_overlay.py`: procedural corrosion/burn/scratch synthesis.
 - `notebooks/colab_defect_inpainting.ipynb`: few-shot SD-inpainting LoRA pipeline
   for diffusion-generated damaged crops (free Colab GPU).
 

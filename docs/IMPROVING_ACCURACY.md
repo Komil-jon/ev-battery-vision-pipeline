@@ -22,9 +22,9 @@ methods** that can push this pipeline past its two current limits:
 - **Why it matters:** the paper recommends ≥3 pack variants for a robust
   classifier; this single dataset provides 19. Biggest available generalization win
   for the detector, and its damaged-pack images can enlarge the real "bad" pool.
-- **How to use:** `python scripts/download_external_datasets.py --zenodo`, then
+- **How to use:** `python scripts/data_prep/download_external_datasets.py --zenodo`, then
   inspect the class scheme in its README and remap to `0=module, 1=busbar`
-  (the script has a `--remap_yaml` hook; pattern follows `scripts/remap_labels.py`).
+  (the script has a `--remap_yaml` hook; pattern follows `scripts/data_prep/remap_labels.py`).
 
 ### 2. Roboflow Universe candidates
 
@@ -35,7 +35,7 @@ methods** that can push this pipeline past its two current limits:
 | [Battery class search](https://universe.roboflow.com/search?q=class:battery) | varies | Browse for module/busbar-adjacent sets |
 
 Roboflow sets download via the existing API-key flow
-(`scripts/download_external_datasets.py --roboflow workspace/project --api_key KEY`).
+(`scripts/data_prep/download_external_datasets.py --roboflow workspace/project --api_key KEY`).
 **Always check the license badge on each dataset page** — most are CC BY 4.0 but
 some are more restrictive.
 
@@ -78,7 +78,7 @@ busbar situation.
 
 - References: [Background-instance copy-paste (MDPI)](https://www.mdpi.com/2079-9292/12/18/3781),
   [CutPaste (arXiv 2104.04015)](https://arxiv.org/abs/2104.04015).
-- **Implemented:** `python scripts/synth_copy_paste.py --n_images 300`.
+- **Implemented:** `python scripts/data_prep/synth_copy_paste.py --n_images 300`.
   Outputs go to `data/detector/images/train_copy_paste/` with matching YOLO labels.
 
 ### 2. Diffusion inpainting for damaged crops (classifier) — highest payoff for the bottleneck
@@ -106,7 +106,7 @@ onto good crops. Less realistic than diffusion output but instant and CPU-only;
 CutPaste-style "scar" augmentation from the anomaly-detection literature shows even
 crude synthetic damage teaches useful decision boundaries.
 
-- **Implemented:** `python scripts/synth_damage_overlay.py --n_per_image 4`.
+- **Implemented:** `python scripts/data_prep/synth_damage_overlay.py --n_per_image 4`.
 
 ### 4. Targeted glare/lighting augmentation (detector)
 
@@ -159,7 +159,7 @@ YOLO-World's ~0). Good on clean pack images, rough on hard grayscale macro shots
 Verdict: a **label accelerator that needs human verification**, not fully automatic.
 Fixes the annotation-consistency problem (one model + one prompt = one standard) and
 can label previously-unlabeled images (Zenodo 712, YouTube frames).
-- Implemented: `scripts/autolabel_grounding_dino.py` (runs CPU or GPU; `--preview`
+- Implemented: `scripts/data_prep/autolabel_grounding_dino.py` (runs CPU or GPU; `--preview`
   to eyeball quality). Refs: [Grounding DINO](https://arxiv.org/abs/2303.05499),
   [Autodistill Grounded-SAM-2](https://github.com/autodistill/autodistill-grounded-sam-2).
 

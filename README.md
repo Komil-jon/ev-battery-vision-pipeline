@@ -22,7 +22,7 @@ localisation and condition assessment, replicating the paper methodology on Appl
 ## Key results from paper
 
 These are the paper's headline figures (private dataset). Run
-`python scripts/evaluate.py` after training to print your reproduced numbers on
+`python scripts/eval/evaluate.py` after training to print your reproduced numbers on
 the public Roboflow proxy alongside these targets.
 
 | Metric | Paper value |
@@ -38,7 +38,7 @@ the public Roboflow proxy alongside these targets.
 
 ## Reproduced results (this repo, public Roboflow data, Apple M1 CPU)
 
-Produced by `python scripts/remap_labels.py` → `train_detector.py --stage all`
+Produced by `python scripts/data_prep/remap_labels.py` → `train_detector.py --stage all`
 → `train_classifier.py` → `evaluate.py`. These are legitimate end-to-end results
 on the public proxy dataset; they are **not** expected to equal the paper's
 private-dataset figures.
@@ -77,7 +77,7 @@ whereas dark conditions barely move mAP50.
 
 The "+ synthetic bad crops" column is the current shipped model: the bad class was
 expanded from 40 to 80 training crops with procedurally damaged good crops
-(`scripts/synth_damage_overlay.py`, synthetic kept ≤50% of the class; test set
+(`scripts/data_prep/synth_damage_overlay.py`, synthetic kept ≤50% of the class; test set
 remains 100% real). Bad-class recall — the safety-critical metric for triage —
 now **exceeds the paper's 0.714**, at the cost of some good-class recall (more
 Grade B/C flags sent to manual review, which is the conservative direction for
@@ -174,10 +174,10 @@ The fastest way to get started — downloads a labelled EV Battery Pack dataset
 
 ```bash
 # Get a free API key at https://roboflow.com
-python scripts/download_dataset.py --api_key YOUR_KEY
+python scripts/data_prep/download_dataset.py --api_key YOUR_KEY
 
 # Verify class distribution
-python scripts/download_dataset.py --check_classes
+python scripts/data_prep/download_dataset.py --check_classes
 ```
 
 ---
@@ -191,10 +191,10 @@ to the 2-class scheme in `dataset.yaml` (`0=module`, `1=busbar`):
 
 ```bash
 # Preview the remap (changes nothing)
-python scripts/remap_labels.py --dry_run
+python scripts/data_prep/remap_labels.py --dry_run
 
 # Apply: Battery Module(1)->module(0), Bus-bar(3)->busbar(1); drop the rest
-python scripts/remap_labels.py
+python scripts/data_prep/remap_labels.py
 
 # Clear stale YOLO caches so the new labels take effect
 find data/detector/labels -name '*.cache' -delete
@@ -210,7 +210,7 @@ scheme. Validation and test labels are remapped too so evaluation is valid.
 ### Step 1 — Generate busbar-targeted augmentations
 
 ```bash
-python scripts/augment_busbars.py --n_augments 6
+python scripts/data_prep/augment_busbars.py --n_augments 6
 # Copies augmented images to data/detector/images/train_busbar_aug/
 # Copy or symlink into train/ before Stage 2
 ```
@@ -219,18 +219,18 @@ python scripts/augment_busbars.py --n_augments 6
 
 ```bash
 # Run both stages
-python scripts/train_detector.py --stage all
+python scripts/train/train_detector.py --stage all
 
 # Or individually
-python scripts/train_detector.py --stage 1   # 100 epochs, 640px, SGD
-python scripts/train_detector.py --stage 2   # 30 epochs, 768px, AdamW recall-boost
+python scripts/train/train_detector.py --stage 1   # 100 epochs, 640px, SGD
+python scripts/train/train_detector.py --stage 2   # 30 epochs, 768px, AdamW recall-boost
 ```
 
 ### Step 3 — Train condition classifier
 
 ```bash
-python scripts/train_classifier.py
-python scripts/train_classifier.py --epochs 30 --batch 8
+python scripts/train/train_classifier.py
+python scripts/train/train_classifier.py --epochs 30 --batch 8
 ```
 
 Expects images in `data/classifier/train/good/` and `data/classifier/train/bad/`.
@@ -250,10 +250,10 @@ script takes `--model NAME`, so you can switch without editing code:
 
 ```bash
 # See all models, their metrics and whether the weights are present
-python scripts/model_zoo.py
+python scripts/common/model_zoo.py
 
 # Same, from any script
-python scripts/pipeline_inference.py --list-models
+python scripts/inference/pipeline_inference.py --list-models
 ```
 
 The specialist scores highest on the facility it was trained on but collapses on
@@ -276,17 +276,17 @@ separately — see [models/detector/generalist_rfdetr/README.md](models/detector
 
 ```bash
 # Single image (uses the default model, generalist_yolo)
-python scripts/pipeline_inference.py --input path/to/image.jpg
+python scripts/inference/pipeline_inference.py --input path/to/image.jpg
 
 # Pick a specific model
-python scripts/pipeline_inference.py --input image.jpg --model specialist
-python scripts/pipeline_inference.py --input image.jpg --model generalist_rfdetr
+python scripts/inference/pipeline_inference.py --input image.jpg --model specialist
+python scripts/inference/pipeline_inference.py --input image.jpg --model generalist_rfdetr
 
 # Folder of images
-python scripts/pipeline_inference.py --input data/detector/images/test/
+python scripts/inference/pipeline_inference.py --input data/detector/images/test/
 
 # Override the model's default confidence threshold
-python scripts/pipeline_inference.py --input image.jpg --conf 0.21
+python scripts/inference/pipeline_inference.py --input image.jpg --conf 0.21
 ```
 
 Output images saved to `outputs/results/`.
@@ -294,10 +294,10 @@ Output images saved to `outputs/results/`.
 ### Live webcam / video demo
 
 ```bash
-python scripts/webcam_demo.py                        # default camera + default model
-python scripts/webcam_demo.py --model specialist     # pick a model
-python scripts/webcam_demo.py --imgsz 480            # faster / smoother on CPU
-python scripts/webcam_demo.py --input clip.mp4       # run on a video file instead
+python scripts/inference/webcam_demo.py                        # default camera + default model
+python scripts/inference/webcam_demo.py --model specialist     # pick a model
+python scripts/inference/webcam_demo.py --imgsz 480            # faster / smoother on CPU
+python scripts/inference/webcam_demo.py --input clip.mp4       # run on a video file instead
 ```
 
 > Use a YOLO model for live video. `generalist_rfdetr` runs at roughly 0.2 FPS on
@@ -319,16 +319,16 @@ quit and reopen the terminal and rerun.
 
 ```bash
 # Full evaluation (detector + classifier + lighting robustness)
-python scripts/evaluate.py
+python scripts/eval/evaluate.py
 
 # Evaluate a specific detector (YOLO models only -- uses Ultralytics .val())
-python scripts/evaluate.py --model specialist
+python scripts/eval/evaluate.py --model specialist
 
 # Skip lighting robustness (faster)
-python scripts/evaluate.py --skip_lighting
+python scripts/eval/evaluate.py --skip_lighting
 
 # Classifier only
-python scripts/evaluate.py --skip_detector
+python scripts/eval/evaluate.py --skip_detector
 ```
 
 ### Comparing detectors fairly
@@ -340,11 +340,11 @@ metric and threshold:
 
 ```bash
 # Compare all available models
-python scripts/compare_detectors.py \
+python scripts/eval/compare_detectors.py \
     --images data/detector/images/test --labels data/detector/labels/test
 
 # Specific models, excluding the MTech annotation outlier
-python scripts/compare_detectors.py --images DIR --labels DIR \
+python scripts/eval/compare_detectors.py --images DIR --labels DIR \
     --models generalist_yolo generalist_rfdetr --exclude-mtech
 ```
 
@@ -428,14 +428,14 @@ Starter tooling:
 
 ```bash
 # External datasets (Zenodo 19-type set, any Roboflow set) + class-remap merge
-python scripts/download_external_datasets.py --dry_run
+python scripts/data_prep/download_external_datasets.py --dry_run
 
 # Copy-paste compositing (+ optional synthetic glare) for the detector
-python scripts/synth_copy_paste.py --n_images 300
-python scripts/synth_copy_paste.py --glare --n_images 200
+python scripts/data_prep/synth_copy_paste.py --n_images 300
+python scripts/data_prep/synth_copy_paste.py --glare --n_images 200
 
 # Procedural damaged-crop synthesis for the classifier (CPU-only fallback)
-python scripts/synth_damage_overlay.py --preview
+python scripts/data_prep/synth_damage_overlay.py --preview
 
 # Diffusion-inpainting damaged-crop synthesis (free Colab GPU)
 # -> notebooks/colab_defect_inpainting.ipynb
