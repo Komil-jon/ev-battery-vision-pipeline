@@ -37,9 +37,9 @@ from ultralytics import YOLO
 # ── paths ──────────────────────────────────────────────────────────────────────
 ROOT               = Path(__file__).resolve().parent.parent
 DATASET_YAML       = ROOT / "dataset.yaml"
-DETECTOR_WEIGHTS   = ROOT / "models" / "detector" / "stage2_recall_boost" / "weights" / "best.pt"
-CLASSIFIER_WEIGHTS = ROOT / "models" / "classifier" / "resnet18_binary.pth"
-CLASS_MAP_PATH     = ROOT / "models" / "classifier" / "class_map.json"
+DETECTOR_WEIGHTS   = ROOT / "models" / "detector" / "specialist_yolov8n" / "weights" / "best.pt"
+CLASSIFIER_WEIGHTS = ROOT / "models" / "classifier_resnet18" / "resnet18_binary.pth"
+CLASS_MAP_PATH     = ROOT / "models" / "classifier_resnet18" / "class_map.json"
 TEST_IMGS          = ROOT / "data" / "detector" / "images" / "test"
 TEST_LABS          = ROOT / "data" / "detector" / "labels" / "test"
 CLASSIFIER_TEST    = ROOT / "data" / "classifier" / "test"

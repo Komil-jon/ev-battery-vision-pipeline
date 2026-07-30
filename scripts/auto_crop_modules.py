@@ -20,7 +20,7 @@ from pathlib import Path
 from ultralytics import YOLO
 
 ROOT             = Path(__file__).resolve().parent.parent
-DETECTOR_WEIGHTS = ROOT / "models" / "detector" / "stage1" / "weights" / "best.pt"
+DETECTOR_WEIGHTS = ROOT / "models" / "detector" / "baseline_yolov8n_stage1" / "weights" / "best.pt"
 IMAGES_DIR       = ROOT / "data" / "detector" / "images" / "train"
 TO_SORT_DIR      = ROOT / "data" / "classifier" / "to_sort"
 GOOD_TRAIN       = ROOT / "data" / "classifier" / "train" / "good"

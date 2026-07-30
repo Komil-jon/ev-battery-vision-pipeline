@@ -20,8 +20,8 @@ from ultralytics import YOLO
 ROOT         = Path(__file__).resolve().parent.parent
 DATASET_YAML = ROOT / "dataset.yaml"
 MODELS_DIR   = ROOT / "models" / "detector"
-STAGE1_NAME  = "stage1"
-STAGE2_NAME  = "stage2_recall_boost"
+STAGE1_NAME  = "baseline_yolov8n_stage1"
+STAGE2_NAME  = "specialist_yolov8n"
 
 
 def train_stage1():
