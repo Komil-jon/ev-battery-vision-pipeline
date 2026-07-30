@@ -42,7 +42,7 @@ import numpy as np
 import torch
 
 ROOT     = Path(__file__).resolve().parents[2]
-DEFECT   = ROOT / "data" / "external" / "roboflow_ue_d1_defect_detection"
+DEFECT   = ROOT / "data" / "sources" / "roboflow_ue_d1_defect_detection"
 DETECTOR = ROOT / "models" / "detector" / "specialist_yolov8n" / "weights" / "best.pt"
 OUT_GOOD = ROOT / "data" / "classifier" / "auto" / "good"
 OUT_BAD  = ROOT / "data" / "classifier" / "auto" / "bad"
