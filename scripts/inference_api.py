@@ -52,8 +52,8 @@ from model_zoo import load_detector as load_zoo_detector, MODEL_REGISTRY, DEFAUL
 
 ROOT               = Path(__file__).resolve().parent.parent
 DETECTOR_WEIGHTS   = MODEL_REGISTRY[DEFAULT_MODEL].weights
-CLASSIFIER_WEIGHTS = ROOT / "models" / "classifier" / "resnet18_binary.pth"
-CLASS_MAP_PATH     = ROOT / "models" / "classifier" / "class_map.json"
+CLASSIFIER_WEIGHTS = ROOT / "models" / "classifier_resnet18" / "resnet18_binary.pth"
+CLASS_MAP_PATH     = ROOT / "models" / "classifier_resnet18" / "class_map.json"
 
 GRADE_A_THRESHOLD = 0.30
 GRADE_C_THRESHOLD = 0.70

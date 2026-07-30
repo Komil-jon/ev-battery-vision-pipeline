@@ -37,7 +37,7 @@ import cv2
 import numpy as np
 
 ROOT    = Path(__file__).resolve().parent.parent
-WEIGHTS = ROOT / "models" / "detector" / "stage2_recall_boost" / "weights" / "best.pt"
+WEIGHTS = ROOT / "models" / "detector" / "specialist_yolov8n" / "weights" / "best.pt"
 OUT_DIR = ROOT / "data" / "youtube_harvest" / "review"
 
 

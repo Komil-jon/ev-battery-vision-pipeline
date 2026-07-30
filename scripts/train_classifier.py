@@ -40,7 +40,7 @@ from sklearn.metrics import (
 ROOT           = Path(__file__).resolve().parent.parent
 TRAIN_DIR      = ROOT / "data" / "classifier" / "train"
 TEST_DIR       = ROOT / "data" / "classifier" / "test"
-SAVE_DIR       = ROOT / "models" / "classifier"
+SAVE_DIR       = ROOT / "models" / "classifier_resnet18"
 SAVE_DIR.mkdir(parents=True, exist_ok=True)
 WEIGHTS_PATH   = SAVE_DIR / "resnet18_binary.pth"
 CLASS_MAP_PATH = SAVE_DIR / "class_map.json"

@@ -44,7 +44,7 @@ MODEL_REGISTRY = {
     "specialist": ModelInfo(
         kind="yolo",
         label="Specialist (paper baseline, single-facility MTech)",
-        weights=ROOT / "models" / "detector" / "stage2_recall_boost" / "weights" / "best.pt",
+        weights=ROOT / "models" / "detector" / "specialist_yolov8n" / "weights" / "best.pt",
         default_conf=0.21,  # paper F1-confidence optimum (Appendix I)
         notes="mAP50 0.818 in-domain (MTech) / 0.277 on the diverse cross-facility test.",
     ),

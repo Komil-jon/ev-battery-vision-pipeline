@@ -43,7 +43,7 @@ import torch
 
 ROOT     = Path(__file__).resolve().parent.parent
 DEFECT   = ROOT / "data" / "external" / "roboflow_ue_d1_defect_detection"
-DETECTOR = ROOT / "models" / "detector" / "stage2_recall_boost" / "weights" / "best.pt"
+DETECTOR = ROOT / "models" / "detector" / "specialist_yolov8n" / "weights" / "best.pt"
 OUT_GOOD = ROOT / "data" / "classifier" / "auto" / "good"
 OUT_BAD  = ROOT / "data" / "classifier" / "auto" / "bad"
 TRAIN_GOOD = ROOT / "data" / "classifier" / "train" / "good"

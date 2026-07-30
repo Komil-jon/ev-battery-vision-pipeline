@@ -34,8 +34,8 @@ from torchvision import datasets, models, transforms
 
 ROOT      = Path(__file__).resolve().parent.parent
 TEST_DIR  = ROOT / "data" / "classifier" / "test"
-WEIGHTS   = ROOT / "models" / "classifier" / "resnet18_binary.pth"
-CLASS_MAP = ROOT / "models" / "classifier" / "class_map.json"
+WEIGHTS   = ROOT / "models" / "classifier_resnet18" / "resnet18_binary.pth"
+CLASS_MAP = ROOT / "models" / "classifier_resnet18" / "class_map.json"
 OUT_DIR   = ROOT / "outputs"
 
 GRADE_A, GRADE_C = 0.30, 0.70   # paper Section 3.4 thresholds

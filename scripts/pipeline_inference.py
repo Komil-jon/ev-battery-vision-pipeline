@@ -43,8 +43,8 @@ from model_zoo import load_detector as load_zoo_detector, MODEL_REGISTRY, DEFAUL
 # ── paths ──────────────────────────────────────────────────────────────────────
 ROOT             = Path(__file__).resolve().parent.parent
 DETECTOR_WEIGHTS = MODEL_REGISTRY[DEFAULT_MODEL].weights  # kept for other scripts that import this
-CLASSIFIER_WEIGHTS = ROOT / "models" / "classifier" / "resnet18_binary.pth"
-CLASS_MAP_PATH   = ROOT / "models" / "classifier" / "class_map.json"
+CLASSIFIER_WEIGHTS = ROOT / "models" / "classifier_resnet18" / "resnet18_binary.pth"
+CLASS_MAP_PATH   = ROOT / "models" / "classifier_resnet18" / "class_map.json"
 OUTPUT_DIR       = ROOT / "outputs" / "results"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 

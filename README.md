@@ -108,7 +108,7 @@ ev-battery-cv/
 ├── models/
 │   ├── detector/
 │   │   ├── stage1/weights/best.pt
-│   │   ├── stage2_recall_boost/weights/best.pt   ← --model specialist
+│   │   ├── specialist_yolov8n/weights/best.pt   ← --model specialist
 │   │   ├── generalist_yolo11n/weights/best.pt    ← --model generalist_yolo
 │   │   └── generalist_rfdetr/                    ← --model generalist_rfdetr
 │   │       └── README.md                            (weights downloaded separately)

@@ -33,7 +33,7 @@ from pathlib import Path
 import cv2
 
 ROOT      = Path(__file__).resolve().parent.parent
-WEIGHTS   = ROOT / "models" / "detector" / "stage2_recall_boost" / "weights" / "best.pt"
+WEIGHTS   = ROOT / "models" / "detector" / "specialist_yolov8n" / "weights" / "best.pt"
 ZENODO    = (ROOT / "data" / "external" / "zenodo_ev_circularity" /
              "Battery Image Dataset" / "images")
 OUT_DIR   = ROOT / "outputs" / "cross_variant"

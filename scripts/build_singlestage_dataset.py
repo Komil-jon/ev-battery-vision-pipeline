@@ -69,8 +69,8 @@ def bootstrap():
     from PIL import Image
     from torchvision import models, transforms
 
-    weights   = ROOT / "models" / "classifier" / "resnet18_binary.pth"
-    class_map = ROOT / "models" / "classifier" / "class_map.json"
+    weights   = ROOT / "models" / "classifier_resnet18" / "resnet18_binary.pth"
+    class_map = ROOT / "models" / "classifier_resnet18" / "class_map.json"
     model = models.resnet18()
     model.fc = nn.Linear(model.fc.in_features, 2)
     model.load_state_dict(torch.load(str(weights), map_location="cpu"))
