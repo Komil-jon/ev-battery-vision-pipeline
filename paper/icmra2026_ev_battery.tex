@@ -180,18 +180,17 @@ families, summarised in Table~\ref{tab:sources}. Two classes are annotated:
 \small
 \begin{tabular}{lrl}
 \toprule
-Source & Images & Pack family \\
+Source & Imgs & Pack family \\
 \midrule
-ev-battery-component-detection & 1,045 & multi-manufacturer \\
-ev-battery-components & 680 & Audi/BMW/Chevrolet/Hyundai/Porsche \\
+ev-battery-comp-detect. & 1,045 & multi-manufacturer \\
+ev-battery-components & 680 & Audi/BMW/Chevy \\
 last\_exp4 & 483 & multi-manufacturer \\
-ev-battery-pack (single facility) & 435 & laboratory rig \\
+ev-battery-pack & 435 & single lab rig \\
 battery\_comp & 280 & Nissan Leaf \\
-ue\_d1\_defect\_detection & 237 & module close-ups \\
-final\_mobilenet\_results & 216 & multi-manufacturer \\
+ue\_d1\_defect & 237 & module close-ups \\
+final\_mobilenet & 216 & multi-manufacturer \\
 automated-disassembly & 117 & disassembly cell \\
-bmw\_i3 & 111 & BMW i3 \\
-ue\_rav4\_module & 96 & Toyota RAV4 \\
+bmw\_i3, ue\_rav4 & 207 & BMW i3, RAV4 \\
 Others (3 sources) & 188 & mixed \\
 \bottomrule
 \end{tabular}
@@ -335,10 +334,11 @@ Under the identical protocol of Section~IV-C, RF-DETR reaches 0.502 mAP@50 again
 \small
 \begin{tabular}{lcccc}
 \toprule
-Model & mAP@50 & mAP@50--95 & module & busbar \\
+Model & mAP & mAP & mod. & bus. \\
+ & @50 & @50--95 & & \\
 \midrule
 Specialist & 0.277 & -- & 0.231 & -- \\
-YOLO11n (multi-source) & 0.410 & 0.256 & 0.547 & 0.304 \\
+YOLO11n (multi-src) & 0.410 & 0.256 & 0.547 & 0.304 \\
 RF-DETR (DINOv2) & \textbf{0.502} & \textbf{0.312} & \textbf{0.680} & \textbf{0.353} \\
 \bottomrule
 \end{tabular}
@@ -346,24 +346,9 @@ RF-DETR (DINOv2) & \textbf{0.502} & \textbf{0.312} & \textbf{0.680} & \textbf{0.
 
 The aggregate figure is misleading on its own. Restricting evaluation to the seven
 sources that share a consistent annotation convention (177 images), the two models
-are effectively tied: overall 0.558 vs 0.544, and module 0.771 vs 0.774
-(Table~\ref{tab:nooutlier}). The DINOv2 backbone confers \emph{no} advantage on
+are effectively tied: overall 0.558 (RF-DETR) vs 0.544 (YOLO11n), module 0.771 vs
+0.774, busbar 0.366 vs 0.344. The DINOv2 backbone confers \emph{no} advantage on
 conventionally annotated packs.
-
-\begin{table}[t]
-\caption{Consensus-convention subset (177 images): the models are tied}
-\label{tab:nooutlier}
-\centering
-\small
-\begin{tabular}{lccc}
-\toprule
-Model & overall & module & busbar \\
-\midrule
-YOLO11n (multi-source) & 0.544 & \textbf{0.774} & 0.344 \\
-RF-DETR (DINOv2) & \textbf{0.558} & 0.771 & \textbf{0.366} \\
-\bottomrule
-\end{tabular}
-\end{table}
 
 The entire aggregate advantage therefore comes from behaviour under
 annotation-convention shift. Adding the outlier source drops YOLO11n's module score
@@ -376,18 +361,8 @@ degradation is the property that matters.
 \subsection{Annotation convention as a failure mode}
 \label{sec:convention}
 
-Fig.~\ref{fig:persource} shows per-source module mAP@50 for the multi-source
-detector. Performance is excellent on most packs -- 0.995, 0.910, 0.873, 0.749 --
-and collapses to 0.043 on exactly one source.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/fig_persource.pdf}
-\caption{Per-source module mAP@50. The 0.043 outlier is not a visually harder pack;
-it uses a divergent definition of ``module'' (small internal sub-components in macro
-views) that disagrees with the other eight sources.}
-\label{fig:persource}
-\end{figure}
+Per-source module mAP@50 for the multi-source detector is excellent on most packs --
+0.995, 0.910, 0.873, 0.749 -- and collapses to 0.043 on exactly one source.
 
 Inspection shows the outlier is not visually harder. It annotates small internal
 sub-components in extreme macro views as ``modules'', while the other sources
@@ -402,19 +377,11 @@ grounding model, and it failed: on grayscale macro imagery the proposals were
 unusable. Convention conflicts are not cheaply fixable post hoc, which argues for
 fixing annotation guidelines before collection.
 
-Fig.~\ref{fig:perclass} summarises per-class behaviour. Busbar remains the weaker
-class for every model (0.30--0.37). We traced a probable cause: 61\% of busbar
-instances in the test set come from a single source, and only four of eight sources
-annotate busbars at all. Busbar therefore suffers the same single-source annotation
-coverage problem that module detection suffers from convention conflict.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/fig_perclass.pdf}
-\caption{Per-class cross-facility mAP@50. Busbar is consistently weaker, tracking its
-sparse and single-source-dominated annotation coverage.}
-\label{fig:perclass}
-\end{figure}
+Busbar remains the weaker class for every model (0.30--0.37, Table~\ref{tab:detectors}).
+We traced a probable cause: 61\% of busbar instances in the test set come from a
+single source, and only four of eight sources annotate busbars at all. Busbar
+therefore suffers the same single-source annotation coverage problem that module
+detection suffers from convention conflict.
 
 \subsection{Condition assessment without damaged data}
 \label{sec:condition}
@@ -430,12 +397,12 @@ good-only anomaly detector.
 \small
 \begin{tabular}{lccc}
 \toprule
-Method & Damaged & Acc. & Damaged training \\
- & recall & & examples used \\
+Method & Damaged & Acc. & Damaged \\
+ & recall & & train ex. \\
 \midrule
 Supervised ResNet18 & 0.857 & 0.792 & 80 \\
 DINOv2 linear probe & -- & 0.792 & 80 \\
-Good-only anomaly (ours) & \textbf{0.857} & -- & \textbf{0} \\
+Good-only anomaly (ours) & \textbf{0.857} & -- & \textbf{0} \\[-1pt]
 \bottomrule
 \end{tabular}
 \end{table}
