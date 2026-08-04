@@ -59,3 +59,11 @@ yolo11n.pt
 yolov8s-worldv2.pt
 sam2.1_b.pt
 mobile_sam.pt
+
+# LaTeX build artefacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.xdv
+paper/*.bbl
+paper/*.blg
