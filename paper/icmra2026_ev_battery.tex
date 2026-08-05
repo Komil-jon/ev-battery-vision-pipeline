@@ -17,41 +17,14 @@
 
 \title{From Images to Robot Coordinates: Dataset Design,\\Detector Selection and Monocular 3D Localisation\\for Automated EV Battery Disassembly}
 
-\author{\IEEEauthorblockN{1\textsuperscript{st} Shiv Ashutosh Katiyar}
-\IEEEauthorblockA{\textit{dept. of Mechanical Engineering} \\
-\textit{University of Birmingham}\\
-Birmingham, United Kingdom \\
-s.a.katiyar@bham.ac.uk}
-~\\
-\and
-\IEEEauthorblockN{2\textsuperscript{nd} Komiljon Kosimov*}
-\IEEEauthorblockA{\textit{dept. of Mechanical Engineering} \\
-\textit{University of Birmingham}\\
-Birmingham, United Kingdom \\
-kxk445@student.bham.ac.uk}
-*Corresponding author
-~\\
-\and
-\IEEEauthorblockN{3\textsuperscript{rd} Yujie Wang}
-\IEEEauthorblockA{\textit{dept. of Mechanical Engineering} \\
-\textit{University of Birmingham}\\
-Birmingham, United Kingdom \\
-yxw1516@student.bham.ac.uk}
-~\\
-\and
-\IEEEauthorblockN{4\textsuperscript{th} Minh Nguyen}
-\IEEEauthorblockA{\textit{dept. of Mechanical Engineering} \\
-\textit{University of Birmingham}\\
-Birmingham, United Kingdom \\
-mxn498@student.bham.ac.uk}
-~\\
-\and
-\IEEEauthorblockN{5\textsuperscript{th} Samia Nefti-Meziani}
-\IEEEauthorblockA{\textit{dept. of Mechanical Engineering} \\
-\textit{University of Birmingham}\\
-Birmingham, United Kingdom \\
-s.nefti-meziani@bham.ac.uk}
-~\\
+\author{
+\IEEEauthorblockN{Shiv Ashutosh Katiyar, Komiljon Kosimov*, Yujie Wang,
+Minh Nguyen, and Samia Nefti-Meziani}
+\IEEEauthorblockA{\textit{Department of Mechanical Engineering,
+University of Birmingham}, Birmingham B15 2TT, United Kingdom \\
+\{s.a.katiyar, s.nefti-meziani\}@bham.ac.uk, ~
+\{kxk445, yxw1516, mxn498\}@student.bham.ac.uk \\
+*Corresponding author}
 }
 
 \maketitle
@@ -74,10 +47,10 @@ that annotation convention, not image difficulty, dominates performance: per-sou
 module accuracy spans 0.995 to 0.043, and the worst case is a labelling disagreement
 rather than a hard image. Finally, we close the gap from pixels to metres without a
 depth camera. A fiducial-referenced monocular transform recovers metric coordinates
-from a single RGB view, achieving 5.67\,mm mean 3D error over 30 randomised trials on
-a URDF model of a real pack at a 96.7\% success rate, with joint multi-marker
-estimation cutting error by 75.6\% over a single marker. We release the annotation
-set (16,945 polygon masks) and all evaluation code.
+from a single RGB view; evaluated in simulation on a URDF model of a real pack over
+30 randomised trials, it achieves 5.67\,mm mean 3D error at a 96.7\% success rate,
+with joint multi-marker estimation cutting error by 75.6\% over a single marker. We
+release the annotation set (16,945 polygon masks) and all evaluation code.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -137,7 +110,8 @@ per-source accuracy spanning 0.995 to 0.043, and give the dataset audit that exp
 it (Sections~\ref{sec:data-analysis} and \ref{sec:convention}).
 \item \textbf{We close the loop to robot coordinates} with a monocular,
 fiducial-referenced transform needing no depth sensor: 5.67\,mm mean 3D error over 30
-randomised trials on a real pack model (Section~\ref{sec:localisation}).
+randomised trials on a real pack model, in simulation
+(Section~\ref{sec:localisation}).
 \end{enumerate}
 
 \textbf{Relation to our prior work.} Our earlier paper \cite{katiyar2026mvml}
@@ -369,8 +343,12 @@ stable across the two regimes.}
 
 The reverse also holds, and is worth stating: the multi-source models score
 \emph{worse} in-domain than the specialist. Training for breadth costs peak accuracy
-on any one pack. Which trade you want depends on whether your line sees one pack type
-or many.
+on any one pack, and which trade you want depends on whether your line sees one pack
+type or many. The size of that drop for YOLO11n (0.195) is larger than breadth alone
+explains, and is not a training failure: the in-domain benchmark happens to be the
+one source whose annotation convention diverges from the rest, a point we return to
+in Section~\ref{sec:convention}. RF-DETR, evaluated on exactly the same images,
+retains 0.541.
 
 \subsection{Comparing architectures}
 \label{sec:detectors}
@@ -440,9 +418,11 @@ simulation with a calibrated monocular RGB camera, in three stages of increasing
 realism. Ground truth is read from the simulator for validation only and never enters
 the estimator.
 
-\textbf{One marker versus several.} With a single marker (ID 0, 0.12\,m) over 30
-trials, detection succeeded in 100\% of trials, marker localisation error was
-4.05\,mm mean, and the propagated error at the battery service point was 7.35\,mm
+\textbf{One marker versus several.} Fig.~\ref{fig:arucoscene} shows the arrangement:
+markers sit on the workcell surface, never on the pack itself. With a single marker
+(ID 0, 0.12\,m) over 30 trials, detection succeeded in 100\% of trials, marker
+localisation error was 4.05\,mm mean, and the propagated error at the service point
+was 7.35\,mm
 mean (median 6.97, max 15.93). Solving jointly over three markers on the same scenes
 cut service-point error to 1.79\,mm mean (median 1.60, max 4.91) with a joint
 reprojection RMSE of 0.47\,px -- a \textbf{75.6\% reduction for no extra hardware}.
