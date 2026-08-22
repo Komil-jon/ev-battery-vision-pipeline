@@ -18,12 +18,12 @@
 \title{From Images to Robot Coordinates: Dataset Design,\\Detector Selection and Monocular 3D Localisation\\for Automated EV Battery Disassembly}
 
 \author{
-\IEEEauthorblockN{Shiv Ashutosh Katiyar, Komiljon Kosimov*, Yujie Wang,
+\IEEEauthorblockN{Yujie Wang, Komiljon Kosimov*, Shiv Ashutosh Katiyar,
 Minh Nguyen, and Samia Nefti-Meziani}
 \IEEEauthorblockA{\textit{Department of Mechanical Engineering,
 University of Birmingham}, Birmingham B15 2TT, United Kingdom \\
-\{s.a.katiyar, s.nefti-meziani\}@bham.ac.uk, ~
-\{kxk445, yxw1516, mxn498\}@student.bham.ac.uk \\
+\{yxw1516, kxk445, mxn498\}@student.bham.ac.uk, ~
+\{s.a.katiyar, s.nefti-meziani\}@bham.ac.uk \\
 *Corresponding author}
 }
 
@@ -47,10 +47,14 @@ that annotation convention, not image difficulty, dominates performance: per-sou
 module accuracy spans 0.995 to 0.043, and the worst case is a labelling disagreement
 rather than a hard image. Finally, we close the gap from pixels to metres without a
 depth camera. A fiducial-referenced monocular transform recovers metric coordinates
-from a single RGB view; evaluated in simulation on a URDF model of a real pack over
-30 randomised trials, it achieves 5.67\,mm mean 3D error at a 96.7\% success rate,
-with joint multi-marker estimation cutting error by 75.6\% over a single marker. We
-release the annotation set (16,945 polygon masks) and all evaluation code.
+from a single RGB view and drives a UR5e manipulator. Across nine object-position
+configurations on real hardware, using only the RGB stream of an Intel RealSense
+D405, target-height MAE was 2.245\,mm and stand-off MAE 1.556\,mm, and the robot
+reached the intended target region in all nine cases. We also report a result that
+constrains how such systems should be validated: image-space reprojection error does
+not predict metric accuracy, with height errors of 5--7\,mm occurring at reprojection
+residuals below 0.11\,px. We release the annotation set (16,945 polygon masks) and
+all evaluation code.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -83,17 +87,16 @@ That practice hides a problem. A recycling line does not receive one pack type; 
 receives whatever arrives that day, from different manufacturers, in different states
 of disassembly, under whatever lighting the building has. A detector validated only
 on the distribution it was trained on tells you very little about the next pack
-through the door. In our own earlier work we built exactly such a single-facility
-system \cite{katiyar2026mvml}, and its most important limitation was that we could
-not say whether it would transfer. This paper answers that question.
+through the door. Our own earlier single-facility system
+\cite{katiyar2026mvml} had exactly this limitation, and this paper answers it.
 
 A second problem follows immediately, and it is the one that matters for robotics.
 Even a perfect detector returns pixels, and a manipulator needs metres. That gap is
-normally bridged with an RGB-D camera, which adds cost, adds calibration work, and
-brings a failure mode of its own: the specular, dark and highly reflective surfaces
-inside a battery pack are exactly the conditions under which consumer depth sensors
-degrade \cite{halmetschlager2019}. We show the bridge can instead be built from one
-RGB camera and a few planar markers placed once in the workcell.
+normally bridged with an RGB-D camera, which adds cost and calibration work, and
+brings a failure mode of its own: the specular, dark and reflective surfaces inside a
+battery pack are exactly where consumer depth sensors degrade
+\cite{halmetschlager2019}. We show the bridge can instead be built from one RGB
+camera and a few planar markers placed once in the workcell.
 
 We make four contributions:
 
@@ -109,9 +112,9 @@ detection of ordinary modules (Section~\ref{sec:detectors}).
 per-source accuracy spanning 0.995 to 0.043, and give the dataset audit that exposes
 it (Sections~\ref{sec:data-analysis} and \ref{sec:convention}).
 \item \textbf{We close the loop to robot coordinates} with a monocular,
-fiducial-referenced transform needing no depth sensor: 5.67\,mm mean 3D error over 30
-randomised trials on a real pack model, in simulation
-(Section~\ref{sec:localisation}).
+fiducial-referenced transform needing no depth sensor, validated on a UR5e across
+nine object-position configurations: 2.245\,mm height MAE, 1.556\,mm stand-off MAE
+and 9/9 successful target reaches (Section~\ref{sec:localisation}).
 \end{enumerate}
 
 \textbf{Relation to our prior work.} Our earlier paper \cite{katiyar2026mvml}
@@ -234,22 +237,22 @@ contain degenerate boxes. Two findings changed how we treated the data.
 
 First, blur and greyscale are largely false alarms. The lowest-scoring images are
 smooth, closed pack lids -- a Laplacian variance metric reads flat metal as
-``blurry'' -- and the greyscale images come entirely from two monochrome sources.
-Both add useful variation, and deleting them on the metric alone would be a mistake.
+``blurry'' -- and the greyscale images come from two monochrome sources. Both add
+useful variation; deleting them on the metric alone would be a mistake.
 
-Second, the genuinely harmful category is unlabelled images that nonetheless contain
-visible components. Some of the 23.5\% is legitimate background -- a closed pack, an
-empty bench -- and roughly 10\% background is healthy because it suppresses false
-positives. But inspection confirmed open packs with clearly visible busbar assemblies
-carrying no annotations at all. Those frames actively teach the detector that busbars
-are background, and plausibly contribute to the weak busbar scores reported below.
+Second, the harmful category is unlabelled images that nonetheless contain visible
+components. Some of the 23.5\% is legitimate background, and roughly 10\% background
+is healthy because it suppresses false positives. But inspection confirmed open packs
+with clearly visible busbar assemblies carrying no annotations at all. Those frames
+actively teach the detector that busbars are background, and plausibly contribute to
+the weak busbar scores reported below.
 
 We also found 16,945 of 19,522 annotations are polygon masks (5--151 vertices) rather
 than boxes, a richer signal than detection consumes. We convert them to enclosing
 boxes for evaluation, and note that an early version of our own pipeline silently
 discarded every polygon label, trained on 20\% of the annotations, and produced an
-inflated score that looked entirely plausible. The failure is easy to introduce and
-hard to notice.
+inflated score that looked plausible. The failure is easy to introduce and hard to
+notice.
 
 \section{Method}
 
@@ -292,18 +295,32 @@ $(\mathbf{R},\mathbf{t})$ follows by minimising reprojection error
 where $\pi(\cdot)$ is the perspective projection. Using all markers jointly rather
 than one at a time over-constrains the fit and averages out per-marker corner noise.
 
-Because packs rest on a support of known height, the detected module centroid
-$\mathbf{u}_b$ back-projects to a unique 3D point: the camera ray through
-$\mathbf{u}_b$ is intersected with the plane $Z=h$,
+Four markers (ID 0--3, 80\,mm, \texttt{DICT\_4X4\_50}) fix the Board frame; the
+target pose is solved separately from a 40\,mm marker using an IPPE planar-PnP
+solution, since a square planar target admits competing solutions under perspective
+projection. Candidates are screened on reprojection error, consistency of the target
+normal with the Board normal, and continuity of estimated height. A target position
+in the Board frame follows as
 \begin{equation}
-\mathbf{X}_b=\mathbf{o}+\lambda\mathbf{d},\qquad
-\lambda=\frac{h-o_z}{d_z},\qquad
-\mathbf{d}=\mathbf{R}^{\star\top}\mathbf{K}^{-1}\tilde{\mathbf{u}}_b ,
+\mathbf{p}_B=\mathbf{R}_{CB}^{\top}\bigl(\mathbf{t}_{CT}-\mathbf{t}_{CB}\bigr),
 \end{equation}
-with $\mathbf{o}=-\mathbf{R}^{\star\top}\mathbf{t}^\star$ the camera centre. The
-result is a metric grasp target in the robot frame from one RGB image. No depth
-buffer, segmentation mask or CAD registration is used, and no marker is ever attached
-to the battery: the object is found by the detector, and markers only fix the frame.
+with $\mathbf{R}_{CB},\mathbf{t}_{CB}$ the Board-to-camera pose and $\mathbf{t}_{CT}$
+the target translation in camera coordinates. A frame is accepted only when both
+Board and target reprojection RMSE are $\leq 2.0$\,px, and the coordinate-wise median
+of 30 accepted samples forms the commanded target, which suppresses isolated
+corner-detection outliers.
+
+\subsection{Transformation to the robot frame and motion}
+Board coordinates are mapped to the UR5e Base frame by a calibrated planar rigid
+transformation, appropriate here because camera, board and robot base are fixed and
+motion is confined to one planar work surface with fixed tool orientation. The
+vertical coordinate is handled separately: the Board plane sits at Base
+$Z=82.04$\,mm, and the commanded height is that plane plus the visually estimated
+target height plus a nominal 50\,mm stand-off. Separating the planar and vertical
+paths lets their errors be attributed independently, which proves important in
+Section~\ref{sec:localisation}. Motion runs in two bounded stages, an approach above
+the target at 0.020\,m/s followed by a vertical descent at 0.005\,m/s, with workspace
+limits enforced before execution.
 
 \section{Results}
 
@@ -413,46 +430,42 @@ busbars at all -- the same coverage problem in a different guise.
 \label{sec:localisation}
 
 A detection is only actionable once expressed in the robot's frame. We evaluate the
-localisation stage of Section~\ref{sec:method-loc} in a PyBullet \cite{pybullet}
-simulation with a calibrated monocular RGB camera, in three stages of increasing
-realism. Ground truth is read from the simulator for validation only and never enters
-the estimator.
+localisation stage of Section~\ref{sec:method-loc} on the hardware shown in
+Fig.~\ref{fig:workcell}: an Intel RealSense D405 fixed above the work surface, a UR5e
+manipulator, and four reference markers bounding the workspace. Only the RGB stream is
+used, at $1280\times720$ and 30\,fps; the depth stream is deliberately left unused so
+that what is measured is monocular fiducial geometry rather than sensed depth. Board
+calibration over 20 views converged to a reprojection RMSE of 0.248\,px.
 
-\textbf{One marker versus several.} Fig.~\ref{fig:arucoscene} shows the arrangement:
-markers sit on the workcell surface, never on the pack itself. With a single marker
-(ID 0, 0.12\,m) over 30 trials, detection succeeded in 100\% of trials, marker
-localisation error was 4.05\,mm mean, and the propagated error at the service point
-was 7.35\,mm
-mean (median 6.97, max 15.93). Solving jointly over three markers on the same scenes
-cut service-point error to 1.79\,mm mean (median 1.60, max 4.91) with a joint
-reprojection RMSE of 0.47\,px -- a \textbf{75.6\% reduction for no extra hardware}.
-Over-constraining the pose fit was the single most effective change we made.
+Three objects, two with regular top surfaces (56 and 63\,mm) and one irregular, were
+each placed at three workspace positions, giving nine object-position configurations,
+270 accepted visual samples and nine physical robot executions.
 
-\textbf{A real pack model.} We then replaced primitive geometry with a URDF model of
-a real 1S4P pack and randomised its placement over 30 trials ($x\in[0.375,0.525]$\,m,
-$y\in[-0.055,0.055]$\,m, yaw $\in[-25^\circ,25^\circ]$). Results are in
-Table~\ref{tab:loc} and Fig.~\ref{fig:loc}. All four workspace markers were detected
-in 30/30 trials and the detector found the pack in 29/30, an end-to-end localisation
-success rate of 96.7\%. Mean 3D error was 5.67\,mm (median 4.51, 95th percentile
-12.16), decomposing into 3.25\,mm in-plane and 4.07\,mm along the optical axis -- the
-anisotropy one expects from a monocular method. Against a naive single-view baseline
-assuming a fixed target height (45.65\,mm mean error), that is an \textbf{87.6\%
-reduction}.
+\textbf{Visual repeatability.} Within-configuration standard deviations were 0.103,
+0.340 and 0.505\,mm in $X$, $Y$ and $Z$. Mean Board and target reprojection RMSE were
+0.388 and 0.191\,px, all within the 2.0\,px acceptance threshold. Short-term estimates
+are therefore stable under fixed-camera conditions.
+
+\textbf{Accuracy and execution.} Table~\ref{tab:loc} and Fig.~\ref{fig:loc}
+summarise. Target-height MAE was 2.245\,mm (RMSE 3.177, signed
+$-0.157\pm3.365$\,mm), stand-off MAE 1.556\,mm against the nominal 50\,mm, and
+\textbf{the robot reached the intended target region in all nine configurations}.
 
 \begin{table}[t]
-\caption{Monocular fiducial-referenced localisation (30 trials each)}
+\caption{Localisation and execution on hardware (9 configurations)}
 \label{tab:loc}
 \centering
 \small
-\begin{tabular}{lccc}
+\begin{tabular}{lc}
 \toprule
-Configuration & Success & Mean 3D & Median \\
- & rate & error (mm) & (mm) \\
+Metric & Result \\
 \midrule
-Fixed-height baseline & -- & 45.65 & -- \\
-Single marker & 100\% & 7.35 & 6.97 \\
-Multi-marker (3) & 100\% & \textbf{1.79} & 1.60 \\
-Full pack model (4) & 96.7\% & 5.67 & 4.51 \\
+Accepted visual samples & 270 (30 per config.) \\
+Height MAE / RMSE & 2.245 / 3.177 mm \\
+Planar error, autonomous (O1) & 3.605 mm (max 6.091) \\
+Planar calibration RMSE & 5.877 mm \\
+Stand-off MAE / RMSE & 1.556 / 1.944 mm \\
+Target reaches & \textbf{9/9 (100\%)} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -460,19 +473,37 @@ Full pack model (4) & 96.7\% & 5.67 & 4.51 \\
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig_localisation.pdf}
-\caption{Monocular localisation accuracy. (a) Joint multi-marker estimation cuts
-error by 75.6\% over a single marker; the full pack model is harder than primitive
-geometry but stays under 6\,mm. (b) Error distribution over 30 randomised trials.}
+\caption{Localisation on hardware. (a) Signed height error for all nine
+object-position configurations; O2 dominates the spread. (b) Error budget. The planar
+figure is the autonomous O1 subset, not the post-alignment measurements.}
 \label{fig:loc}
 \end{figure}
 
+\textbf{Reprojection error does not predict metric accuracy.} This is the result we
+consider most consequential for how such systems are validated. Two configurations
+produced height errors of $-5.330$ and $+6.910$\,mm at target reprojection residuals
+of just 0.101 and 0.052\,px. Planar PnP depth is sensitive to small changes in
+detected corner geometry, target tilt, marker flatness and the physical definition of
+the target plane, none of which a low image-space residual detects. Image-space
+quality checks are necessary but plainly not sufficient, and a system validated on
+reprojection error alone may be substantially worse in robot space than it appears.
+
+\textbf{On the planar figure.} Six of the nine planar measurements were taken after
+manual flange-centre alignment following automatic arrival, so they cannot be read as
+autonomous positioning accuracy; we report them separately and base our claim on the
+three genuinely autonomous measurements, which average 3.605\,mm with a 6.091\,mm
+maximum. The planar calibration fit itself had an RMSE of 5.877\,mm. The defensible
+statement is that the system moves the robot reliably into the target neighbourhood,
+not that it achieves sub-millimetre absolute accuracy.
+
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.84\columnwidth]{figures/fig_aruco_scene.png}
-\caption{Localisation scene. Workspace markers fix the metric reference frame; the
-pack is found by the RGB detector (magenta outline) and never carries a marker used
-as an object label. Workspace reprojection RMSE 0.354\,px.}
-\label{fig:arucoscene}
+\includegraphics[width=0.68\columnwidth]{figures/fig_workcell.png}
+\caption{Vision-guided workcell. An Intel RealSense D405 observes the surface from
+above; four reference markers bound the workspace and define the Board frame. Only
+the RGB stream is used. The UR5e approaches the target from above under a bounded
+two-stage motion.}
+\label{fig:workcell}
 \end{figure}
 
 The residual error budget is the most useful output here. Camera position error was
@@ -509,13 +540,19 @@ one-shot rate at 0.9757 mAP@50 shows \cite{rapid2026}, perception accuracy does 
 convert directly into manipulation success. Hand-eye calibration error, gripper
 compliance and contact dynamics are outside our scope.
 
-The localisation results are obtained in simulation. Simulation isolates the geometry
-of the estimator from sensor noise, which is what we set out to measure, but it omits
-motion blur, rolling shutter, marker occlusion by the manipulator, and the specular
-highlights that make real battery internals difficult. Real-camera validation is
-required before these figures can be claimed for a deployed cell, and we expect some
-degradation. The method also assumes packs rest on a support of known height; stacked
-or tilted packs violate that and would need depth or a second view.
+The localisation experiments cover nine configurations with one robot execution each:
+enough to demonstrate the chain end to end, too few to characterise workspace-wide
+error statistically. Planar and stand-off ground truth were measured manually, so
+these are experimental validation values rather than traceable metrology; an external
+tracker would be needed to separate calibration error from robot repeatability and
+operator measurement error. We validated approach and arrival, not grasping, so
+task-level disassembly tolerance cannot be inferred from stand-off accuracy alone.
+
+The localisation stage used a fiducial on the target object, whereas the detector
+operates markerless. Substituting a detected mask centroid for that marker is the
+obvious next step, and we expect it to cost accuracy: marker corners resolve to a
+fraction of a pixel, a learned centroid does not. The method also assumes targets rest
+on a support of known height, which stacked or tilted packs violate.
 
 Finally, our data is assembled from public sources rather than collected under
 controlled conditions, so pack-type coverage is uneven and licences vary.
@@ -525,21 +562,23 @@ controlled conditions, so pack-type coverage is uneven and licences vary.
 Single-facility evaluation substantially overstates how well EV battery module
 detectors will perform in a recycling facility: a detector scoring 0.818 mAP@50
 in-domain scored 0.277 across ten pack sources. Multi-source training with a frozen
-DINOv2 backbone raises cross-facility accuracy to 0.502 mAP@50, and we showed that
-this advantage is specifically robustness to annotation-convention shift rather than
-better detection of ordinary modules. Annotation convention proved to be the dominant
-and measurable failure mode, with per-source accuracy from 0.995 to 0.043 -- a result
-that points to dataset design, not architecture, as the first thing to get right.
+DINOv2 backbone raises cross-facility accuracy to 0.502 mAP@50, and that advantage is
+specifically robustness to annotation-convention shift rather than better detection of
+ordinary modules. Annotation convention proved the dominant and measurable failure
+mode, with per-source accuracy from 0.995 to 0.043, pointing to dataset design rather
+than architecture as the first thing to get right.
 
-We then closed the loop from pixels to metres without a depth sensor. A
-fiducial-referenced monocular transform localised a real pack model to 5.67\,mm mean
-3D error at a 96.7\% success rate, and solving jointly over several markers rather
-than one reduced error by 75.6\%. Because most of the residual budget traces to the
-reference frame rather than to detection, calibration quality is the more productive
-engineering target.
+We then closed the loop from pixels to metres without a depth sensor. Using only the
+RGB stream of a D405, a fiducial-referenced transform drove a UR5e to 2.245\,mm
+height MAE and 1.556\,mm stand-off MAE across nine configurations, reaching the
+intended target every time. Two findings qualify that: reprojection error does not
+predict metric accuracy, with 5--7\,mm height errors at residuals below 0.11\,px; and
+the 5.877\,mm planar calibration RMSE, not detection, dominates the residual budget.
+Calibration quality is the more productive engineering target.
 
-Future work is real-camera validation of the localisation stage and integration with
-a manipulator under force feedback, moving from a metric target to a completed grasp.
+Future work is to replace the target fiducial with a detected mask centroid, closing
+the two halves of this paper into a single markerless pipeline, and to add force
+feedback so the system moves from a metric target to a completed grasp.
 
 \section*{Data Availability}
 Annotations (16,945 polygon masks), evaluation code and trained detector weights are
@@ -628,9 +667,6 @@ pp. 2280--2292, 2014.
 \bibitem{lepetit2009epnp} V. Lepetit, F. Moreno-Noguer, and P. Fua, ``EPnP: An
 accurate $O(n)$ solution to the PnP problem,'' \emph{International Journal of
 Computer Vision}, vol. 81, no. 2, pp. 155--166, 2009.
-
-\bibitem{pybullet} E. Coumans and Y. Bai, ``PyBullet, a Python module for physics
-simulation for games, robotics and machine learning,'' 2016--2021.
 
 \end{thebibliography}
 
