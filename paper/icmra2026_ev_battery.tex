@@ -102,28 +102,25 @@ We make four contributions:
 
 \begin{enumerate}
 \item \textbf{We quantify how badly single-facility evaluation overstates accuracy}
-for EV battery module detection: 0.818 $\rightarrow$ 0.277 mAP@50, a 66\% relative
-loss (Section~\ref{sec:gap}).
+for EV battery module detection: a 66\% relative loss (Section~\ref{sec:gap}).
 \item \textbf{We compare training strategies and architectures on identical data},
-showing a frozen self-supervised backbone improves cross-facility accuracy (0.502 vs
-0.410 mAP@50) and isolating \emph{why}: robustness to annotation shift, not better
-detection of ordinary modules (Section~\ref{sec:detectors}).
+showing a frozen self-supervised backbone improves cross-facility accuracy and
+isolating \emph{why}: robustness to annotation shift, not better detection of
+ordinary modules (Section~\ref{sec:detectors}).
 \item \textbf{We show annotation convention is the dominant failure mode}, with
 per-source accuracy spanning 0.995 to 0.043, and give the dataset audit that exposes
 it (Sections~\ref{sec:data-analysis} and \ref{sec:convention}).
 \item \textbf{We close the loop to robot coordinates} with a monocular,
 fiducial-referenced transform needing no depth sensor, validated on a UR5e across
-nine object-position configurations: 2.245\,mm height MAE, 1.556\,mm stand-off MAE
-and 9/9 successful target reaches (Section~\ref{sec:localisation}).
+nine object-position configurations (Section~\ref{sec:localisation}).
 \end{enumerate}
 
 \textbf{Relation to our prior work.} Our earlier paper \cite{katiyar2026mvml}
 reported a CPU-deployable two-stage pipeline for a single facility, including
-condition grading. The present paper deliberately does not revisit condition
-assessment. It addresses the limitation that work identified but could not test --
-cross-facility transfer -- and adds the metric localisation stage required to drive a
-manipulator. The dataset, the benchmark, the architectures compared and the
-localisation method are all new here.
+condition grading, which we deliberately do not revisit here. This paper instead
+addresses the limitation that work could not test, cross-facility transfer, and adds
+the metric localisation stage needed to drive a manipulator. The dataset, benchmark,
+architectures and localisation method are all new.
 
 \section{Background and Related Work}
 
@@ -139,12 +136,10 @@ reporting over 90\% unscrewing efficiency. RAPID \cite{rapid2026} integrates
 open-vocabulary detection with RGB-D sensing on a gantry manipulator and reports
 0.9757 mAP@50 for component detection.
 
-RAPID's manipulation numbers are worth dwelling on, because they set the honest scope
-for any perception claim. With that detection accuracy, one-shot vision-driven
-grasping succeeded 57\% of the time, rising to 83\% with visual servoing and 97\% with
-taught-in poses. Perception accuracy is necessary but plainly not sufficient. We
-therefore restrict our claims to perception and localisation, and report neither as a
-grasp success rate.
+RAPID's manipulation numbers set the honest scope for any perception claim: at that
+detection accuracy, one-shot vision-driven grasping still succeeded only 57\% of the
+time, rising to 83\% with visual servoing. Perception accuracy is necessary but
+plainly not sufficient, so we restrict our claims to perception and localisation.
 
 \subsection{Perception for battery components}
 Most published work targets fasteners rather than modules. Screw detection has been
@@ -161,19 +156,17 @@ its own images -- 1,719 in \cite{screwbatt2023} -- and none released them.
 that the field is hampered by a lack of public datasets. That motivates our release.
 
 \subsection{Generalisation, and why data may matter more than architecture}
-Domain shift is a well-documented failure mode for detectors
-\cite{recht2019,koh2021wilds}: models that appear strong on their own test split
-degrade sharply on data collected differently, even when the task is unchanged.
-Self-supervised backbones such as DINOv2 \cite{dinov2} learn features that transfer
-without task-specific fine-tuning, and detection transformers built on them, such as
-RF-DETR \cite{rfdetr}, are reported to generalise better than from-scratch detectors
-in low-data regimes. Whether that holds on the cluttered, specular imagery of battery
-internals is an open question we test directly.
+Domain shift is a well-documented failure mode \cite{recht2019,koh2021wilds}: models
+that appear strong on their own test split degrade sharply on data collected
+differently. Self-supervised backbones such as DINOv2 \cite{dinov2} learn features
+that transfer without task-specific fine-tuning, and detection transformers built on
+them \cite{rfdetr} are reported to generalise better than from-scratch detectors in
+low-data regimes. Whether that holds on the cluttered, specular imagery of battery
+internals is what we test.
 
 Running alongside this is the data-centric argument \cite{northcutt2021} that label
-quality often limits performance more than model capacity, and that widely used
-benchmarks contain enough label noise to distort conclusions. Our own prior work
-found the same effect \cite{katiyar2026mvml}; here we quantify it across facilities.
+quality limits performance more than model capacity. Our own prior work found the
+same effect \cite{katiyar2026mvml}; here we quantify it across facilities.
 
 \subsection{Recovering metric pose from images}
 Vision-guided disassembly usually obtains depth from RGB-D \cite{rapid2026} or from
@@ -223,11 +216,10 @@ drawn from all sources and held out entirely from training. We verified with
 perceptual hashing (dHash, Hamming distance $\leq 6$) that no near-duplicate crosses
 the train/test boundary for any source we report per-source results on.
 
-This turned out to be necessary rather than precautionary. One candidate source, a
-712-image public collection covering 19 vehicle types, re-publishes images from
-another source already in our set: 78 were byte-identical duplicates of our training
-images. Merging without checking would have leaked training data straight into the
-test set and inflated every number in this paper.
+This proved necessary rather than precautionary. One candidate source, a 712-image
+public collection covering 19 vehicle types, re-publishes images from another source
+already in our set: 78 were byte-identical duplicates of our training images. Merging
+without checking would have leaked training data straight into the test set.
 
 \subsection{What a dataset audit reveals}
 \label{sec:data-analysis}
@@ -241,11 +233,11 @@ smooth, closed pack lids -- a Laplacian variance metric reads flat metal as
 useful variation; deleting them on the metric alone would be a mistake.
 
 Second, the harmful category is unlabelled images that nonetheless contain visible
-components. Some of the 23.5\% is legitimate background, and roughly 10\% background
-is healthy because it suppresses false positives. But inspection confirmed open packs
-with clearly visible busbar assemblies carrying no annotations at all. Those frames
-actively teach the detector that busbars are background, and plausibly contribute to
-the weak busbar scores reported below.
+components. Some of the 23.5\% is legitimate background, which is healthy in moderation
+because it suppresses false positives. But inspection confirmed open packs with clearly
+visible busbar assemblies carrying no annotations at all, frames that actively teach
+the detector that busbars are background and plausibly contribute to the weak busbar
+scores below.
 
 We also found 16,945 of 19,522 annotations are polygon masks (5--151 vertices) rather
 than boxes, a richer signal than detection consumes. We convert them to enclosing
@@ -275,10 +267,10 @@ at 384\,px for 60 epochs.
 
 \subsection{Evaluation protocol}
 Confidence scores are not comparable across architectures, so every model is scored
-with a single metric implementation at a common low confidence threshold of 0.05, on
-identical images, against identical ground truth including polygon-derived boxes. We
-emphasise this because mixing metric implementations across architectures silently
-produced a spurious result in our own early experiments.
+with a single metric implementation at a common confidence threshold of 0.05, on
+identical images, against identical ground truth including polygon-derived boxes.
+Mixing metric implementations across architectures silently produced a spurious result
+in our own early experiments.
 
 \subsection{Monocular fiducial-referenced localisation}
 \label{sec:method-loc}
@@ -327,7 +319,7 @@ limits enforced before execution.
 \subsection{How much single-facility evaluation overstates accuracy}
 \label{sec:gap}
 
-Table~\ref{tab:gap} and Fig.~\ref{fig:gap} quantify the central problem. The
+Table~\ref{tab:gap} quantifies the central problem. The
 specialist scores 0.818 mAP@50 on the single-facility benchmark it was trained and
 validated on, and 0.277 on the cross-facility benchmark: a 66\% relative loss. Its
 in-domain number simply does not predict deployment behaviour.
@@ -348,15 +340,6 @@ Multi-source RF-DETR & 0.541 & \textbf{0.502} \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/fig_gap.pdf}
-\caption{A single-facility detector loses 66\% of its accuracy when evaluated across
-ten pack sources. The multi-source model with a frozen DINOv2 backbone is far more
-stable across the two regimes.}
-\label{fig:gap}
-\end{figure}
 
 The reverse also holds, and is worth stating: the multi-source models score
 \emph{worse} in-domain than the specialist. Training for breadth costs peak accuracy
@@ -482,19 +465,17 @@ figure is the autonomous O1 subset, not the post-alignment measurements.}
 \textbf{Reprojection error does not predict metric accuracy.} This is the result we
 consider most consequential for how such systems are validated. Two configurations
 produced height errors of $-5.330$ and $+6.910$\,mm at target reprojection residuals
-of just 0.101 and 0.052\,px. Planar PnP depth is sensitive to small changes in
-detected corner geometry, target tilt, marker flatness and the physical definition of
-the target plane, none of which a low image-space residual detects. Image-space
-quality checks are necessary but plainly not sufficient, and a system validated on
-reprojection error alone may be substantially worse in robot space than it appears.
+of just 0.101 and 0.052\,px. Planar PnP depth is sensitive to corner geometry, target
+tilt, marker flatness and the physical definition of the target plane, none of which a
+low image-space residual detects. A system validated on reprojection error alone may
+be substantially worse in robot space than it appears.
 
-\textbf{On the planar figure.} Six of the nine planar measurements were taken after
-manual flange-centre alignment following automatic arrival, so they cannot be read as
-autonomous positioning accuracy; we report them separately and base our claim on the
-three genuinely autonomous measurements, which average 3.605\,mm with a 6.091\,mm
-maximum. The planar calibration fit itself had an RMSE of 5.877\,mm. The defensible
-statement is that the system moves the robot reliably into the target neighbourhood,
-not that it achieves sub-millimetre absolute accuracy.
+\textbf{On the planar figure.} Six of the nine planar measurements followed manual
+flange-centre alignment after automatic arrival, so they cannot be read as autonomous
+accuracy; we base our claim on the three genuinely autonomous measurements, which
+average 3.605\,mm with a 6.091\,mm maximum against a 5.877\,mm calibration RMSE. The
+defensible statement is that the system moves the robot reliably into the target
+neighbourhood, not that it achieves sub-millimetre absolute accuracy.
 
 \begin{figure}[t]
 \centering
@@ -506,18 +487,17 @@ two-stage motion.}
 \label{fig:workcell}
 \end{figure}
 
-The residual error budget is the most useful output here. Camera position error was
-2.26\,mm and workspace reprojection RMSE 0.354\,px, so a substantial share of the
-5.67\,mm total traces to the reference frame rather than to detection. Improving
-marker placement and calibration is therefore a more productive target than sharpening
-the detector -- not obvious in advance, and easy to get backwards.
-
-Set against the manipulation literature, RAPID reports 0.9757 mAP@50 yet 57\%
-one-shot grasp success \cite{rapid2026}, so the loss occurs between perception and
-actuation rather than in detection. A 5.67\,mm target with a 12.16\,mm 95th
-percentile sits inside the closing tolerance of a compliant gripper on a module of
-this size, suggesting the monocular route is viable for coarse positioning with final
-alignment handed to force feedback or visual servoing.
+The error budget points somewhere useful. Board and target reprojection residuals
+averaged 0.388 and 0.191\,px, comfortably inside tolerance, yet the planar
+calibration fit carried an RMSE of 5.877\,mm, larger than any error we measured
+downstream of it. The reference frame, not the vision, dominates. Improving marker
+placement and calibration is therefore a more productive target than sharpening the
+detector -- not obvious in advance, and easy to get backwards. Set against the
+manipulation literature, RAPID reports 0.9757 mAP@50 yet 57\% one-shot grasp success
+\cite{rapid2026}: the loss occurs between perception and actuation. A 2.245\,mm
+height MAE with a 4\,mm worst-case stand-off sits inside the closing tolerance of a
+compliant gripper at this scale, so the monocular route is viable for coarse
+positioning with final alignment handed to force feedback or visual servoing.
 
 \subsection{Deployment and negative results}
 INT8 quantisation of the detector to ONNX cut latency 20\% and size 46\% (44.8\,ms,
@@ -526,19 +506,16 @@ and a PnP solve, negligible against detector inference.
 
 Three failures constrain the design space. Open-vocabulary detection is unusable
 here: YOLO-World, prompted with ``ev battery module'' and ``busbar'', scored 0.004
-mAP@50, battery internals being too far out of distribution despite strong
-general-domain results. Naive multi-source merging \emph{reduced} module mAP@50 to
-0.331, below the single-source baseline -- more data made the model worse. And
-copy-paste and glare augmentation reduced mAP in our setting, despite being widely
-reported as beneficial elsewhere.
+mAP@50, battery internals being too far out of distribution. Naive multi-source
+merging \emph{reduced} module mAP@50 to 0.331, below the single-source baseline: more
+data made the model worse. And copy-paste and glare augmentation reduced mAP here,
+despite being widely reported as beneficial elsewhere.
 
 \section{Limitations}
 
-Our claims concern perception and localisation. We report metric accuracy, not grasp
-success: no physical manipulator was driven from these estimates, and as RAPID's 57\%
-one-shot rate at 0.9757 mAP@50 shows \cite{rapid2026}, perception accuracy does not
-convert directly into manipulation success. Hand-eye calibration error, gripper
-compliance and contact dynamics are outside our scope.
+Our claims concern perception and localisation. We report metric accuracy and target
+reaching, not grasp success: the manipulator approached each target but performed no
+grasp, and gripper compliance and contact dynamics are outside our scope.
 
 The localisation experiments cover nine configurations with one robot execution each:
 enough to demonstrate the chain end to end, too few to characterise workspace-wide
@@ -559,22 +536,19 @@ controlled conditions, so pack-type coverage is uneven and licences vary.
 
 \section{Conclusion}
 
-Single-facility evaluation substantially overstates how well EV battery module
-detectors will perform in a recycling facility: a detector scoring 0.818 mAP@50
-in-domain scored 0.277 across ten pack sources. Multi-source training with a frozen
-DINOv2 backbone raises cross-facility accuracy to 0.502 mAP@50, and that advantage is
-specifically robustness to annotation-convention shift rather than better detection of
-ordinary modules. Annotation convention proved the dominant and measurable failure
-mode, with per-source accuracy from 0.995 to 0.043, pointing to dataset design rather
-than architecture as the first thing to get right.
+Three conclusions follow. Single-facility evaluation overstates deployment accuracy
+badly enough to mislead: the same detector lost two thirds of its accuracy when moved
+across pack sources. A frozen self-supervised backbone helps, but not in the way one
+might assume, buying graceful degradation under annotation shift rather than better
+detection of ordinary modules. And annotation convention, not architecture, proved
+the dominant failure mode, which points at dataset design as the first thing to get
+right.
 
-We then closed the loop from pixels to metres without a depth sensor. Using only the
-RGB stream of a D405, a fiducial-referenced transform drove a UR5e to 2.245\,mm
-height MAE and 1.556\,mm stand-off MAE across nine configurations, reaching the
-intended target every time. Two findings qualify that: reprojection error does not
-predict metric accuracy, with 5--7\,mm height errors at residuals below 0.11\,px; and
-the 5.877\,mm planar calibration RMSE, not detection, dominates the residual budget.
-Calibration quality is the more productive engineering target.
+The localisation results carry a similar warning. The chain runs end to end on real
+hardware and reached its target in every configuration, but reprojection error did not
+predict metric accuracy, and calibration rather than vision dominated the residual
+budget. Both results say the same thing in different registers: the number a system
+reports on its own terms is a poor guide to how it will behave on someone else's.
 
 Future work is to replace the target fiducial with a detected mask centroid, closing
 the two halves of this paper into a single markerless pipeline, and to add force
@@ -598,7 +572,7 @@ localisation experiments could not have been carried out.
 \begin{thebibliography}{00}
 
 \bibitem{ec_crm} European Commission, ``Study on the critical raw materials for the
-EU: Final report,'' Publications Office of the European Union, Brussels, 2023.
+EU: Final report,'' Publ. Office Eur. Union, Brussels, 2023.
 
 \bibitem{harper2019} G. Harper \emph{et al.}, ``Recycling lithium-ion batteries from
 electric vehicles,'' \emph{Nature}, vol. 575, pp. 75--86, 2019.
@@ -607,12 +581,11 @@ electric vehicles,'' \emph{Nature}, vol. 575, pp. 75--86, 2019.
 battery recycling in Europe,'' Brussels, 2024.
 
 \bibitem{eubattreg} European Parliament and Council, ``Regulation (EU) 2023/1542
-concerning batteries and waste batteries,'' \emph{Official Journal of the European
-Union}, vol. L191, pp. 1--117, 2023.
+concerning batteries and waste batteries,'' \emph{Off. J. Eur. Union}, vol. L191, pp. 1--117, 2023.
 
 \bibitem{zang2024robotic} Y. Zang, M. Qu, D. T. Pham, R. Dixon, F. Goli, Y. Zhang,
 and Y. Wang, ``Robotic disassembly of electric vehicle batteries: Technologies and
-opportunities,'' \emph{Computers and Industrial Engineering}, vol. 198, 110727, 2024.
+opportunities,'' \emph{Comput. Ind. Eng.}, vol. 198, 110727, 2024.
 
 \bibitem{wegener2015} K. Wegener, S. Andrew, A. Raatz, K. Dr\"oder, and C. Herrmann,
 ``Disassembly of electric vehicle batteries using the example of the Audi Q5 hybrid
@@ -627,23 +600,20 @@ end-of-life electric vehicle batteries,'' \emph{Biomimetics}, vol. 10, no. 8, 55
 vehicle disassembly,'' \emph{arXiv:2603.18520}, 2026.
 
 \bibitem{screwrcnn2021} ``Accurate screw detection method based on Faster R-CNN and
-rotation edge similarity for automatic screw disassembly,'' \emph{International
-Journal of Computer Integrated Manufacturing}, vol. 34, no. 11, 2021.
+rotation edge similarity for automatic screw disassembly,'' \emph{Int. J. Comput. Integr. Manuf.}, vol. 34, no. 11, 2021.
 
 \bibitem{screwbatt2023} ``An accurate activate screw detection method for automatic
 electric vehicle battery disassembly,'' \emph{Batteries}, vol. 9, no. 3, 187, 2023.
 
 \bibitem{screwcompare2026} ``Comparative analysis of YOLO and Faster R-CNN models for
-EV battery screw detection,'' \emph{International Journal of Advanced Manufacturing
-Technology}, 2026.
+EV battery screw detection,'' \emph{Int. J. Adv. Manuf. Technol.}, 2026.
 
 \bibitem{cvmodule2023} ``Computer vision application for industrial Li-ion battery
-module disassembly,'' \emph{Production Engineering}, 2023.
+module disassembly,'' \emph{Prod. Eng.}, 2023.
 
 \bibitem{katiyar2026mvml} S. Katiyar, P. Venigalla, K. Kosimov, and S. Nefti-Meziani,
 ``Vision model for detection and condition assessment of EV battery components for
-circular manufacturing,'' in \emph{Proc. 12th World Congress on Electrical
-Engineering and Computer Systems and Sciences (EECSS 2026)}, London, UK, Aug. 2026,
+circular manufacturing,'' in \emph{Proc. 12th World Congr. Elect. Eng. Comput. Syst. Sci. (EECSS)}, London, UK, Aug. 2026,
 Paper MVML 125. doi: 10.11159/mvml26.125.
 
 \bibitem{recht2019} B. Recht, R. Roelofs, L. Schmidt, and V. Shankar, ``Do ImageNet
@@ -657,24 +627,22 @@ label errors in test sets destabilize machine learning benchmarks,'' in \emph{Pr
 NeurIPS Datasets and Benchmarks}, 2021.
 
 \bibitem{dinov2} M. Oquab \emph{et al.}, ``DINOv2: Learning robust visual features
-without supervision,'' \emph{Transactions on Machine Learning Research}, 2024.
+without supervision,'' \emph{Trans. Mach. Learn. Res.}, 2024.
 
 \bibitem{rfdetr} Roboflow, ``RF-DETR: A real-time detection transformer,'' 2025.
 
 \bibitem{yolo11} G. Jocher and J. Qiu, ``Ultralytics YOLO11,'' 2024.
 
 \bibitem{halmetschlager2019} G. Halmetschlager-Funek, M. Suchi, M. Kampel, and
-M. Vincze, ``An empirical evaluation of ten depth cameras,'' \emph{IEEE Robotics
-\& Automation Magazine}, vol. 26, no. 1, pp. 67--77, 2019.
+M. Vincze, ``An empirical evaluation of ten depth cameras,'' \emph{IEEE Robot. Autom. Mag.}, vol. 26, no. 1, pp. 67--77, 2019.
 
 \bibitem{aruco2014} S. Garrido-Jurado, R. Mu\~{n}oz-Salinas, F. J. Madrid-Cuevas, and
 M. J. Mar\'{i}n-Jim\'{e}nez, ``Automatic generation and detection of highly reliable
-fiducial markers under occlusion,'' \emph{Pattern Recognition}, vol. 47, no. 6,
+fiducial markers under occlusion,'' \emph{Pattern Recognit.}, vol. 47, no. 6,
 pp. 2280--2292, 2014.
 
 \bibitem{lepetit2009epnp} V. Lepetit, F. Moreno-Noguer, and P. Fua, ``EPnP: An
-accurate $O(n)$ solution to the PnP problem,'' \emph{International Journal of
-Computer Vision}, vol. 81, no. 2, pp. 155--166, 2009.
+accurate $O(n)$ solution to the PnP problem,'' \emph{Int. J. Comput. Vis.}, vol. 81, no. 2, pp. 155--166, 2009.
 
 \end{thebibliography}
 
