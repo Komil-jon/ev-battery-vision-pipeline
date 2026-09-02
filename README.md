@@ -1,11 +1,44 @@
 # EV Battery CV Pipeline
 
-CPU-deployable two-stage computer vision pipeline for EV battery module and busbar
-localisation and condition assessment, replicating the paper methodology on Apple M1.
+Computer vision for EV battery disassembly: module and busbar detection, condition
+assessment, and monocular 3D localisation for robotic handling.
 
-**Stage 1 — Detection:** YOLOv8n localises battery modules and busbars  
-**Stage 2 — Classification:** ResNet18 binary classifier (good/bad) on each module crop  
+**Stage 1 — Detection:** YOLOv8n / YOLO11n / RF-DETR localise battery modules and busbars
+**Stage 2 — Classification:** ResNet18 binary classifier (good/bad) on each module crop
 **Output:** Grade A / B / C triage per detected module via confidence thresholds
+
+---
+
+## Publications
+
+**[1] Vision Model for Detection and Condition Assessment of EV Battery Components
+for Circular Manufacturing** — *published*
+S. Katiyar, P. Venigalla, K. Kosimov, S. Nefti-Meziani.
+Proc. 12th World Congress on Electrical Engineering and Computer Systems and
+Sciences (EECSS 2026), London, UK, Aug. 2026, Paper MVML 125.
+DOI: [10.11159/mvml26.125](https://doi.org/10.11159/mvml26.125)
+
+> The single-facility two-stage pipeline. Most of this repository's Stage 1 / Stage 2
+> code and the "Key results" table below correspond to this paper.
+
+**[2] From Images to Robot Coordinates: Dataset Design, Detector Selection and
+Monocular 3D Localisation for Automated EV Battery Disassembly** — *under review*
+Y. Wang, K. Kosimov, S. A. Katiyar, Q. Nguyen. Source: [`paper/`](paper/)
+
+> Extends [1] to cross-facility evaluation, compares detector architectures on a
+> 13-source dataset, and adds metric 3D localisation validated on a UR5e.
+> Localisation code: [D405-ArUco-UR5e-Validation](https://github.com/xcdgdj/D405-ArUco-UR5e-Validation)
+
+Headline results from [2]:
+
+| Finding | Result |
+|---|---|
+| Cross-facility generalisation gap | 0.818 → **0.277** mAP@50 (66% loss) |
+| Best cross-facility detector | RF-DETR **0.502** vs YOLO11n 0.410 mAP@50 |
+| Annotation convention spread | 0.995 → **0.043** per-source module mAP@50 |
+| Localisation (UR5e, RGB only) | **2.245 mm** height MAE, **9/9** target reaches |
+
+Released annotations: **16,945 polygon masks** in [`data/labels_release/`](data/labels_release/).
 
 > **Replication note.** The paper's results were produced on a private in-house
 > dataset that is not distributed. This repository replicates the *methodology*
@@ -19,13 +52,13 @@ localisation and condition assessment, replicating the paper methodology on Appl
 
 ---
 
-## Key results from paper
+## Key results from [1]
 
-These are the paper's headline figures (private dataset). Run
+These are the headline figures from publication [1] (private dataset). Run
 `python scripts/eval/evaluate.py` after training to print your reproduced numbers on
 the public Roboflow proxy alongside these targets.
 
-| Metric | Paper value |
+| Metric | Value in [1] |
 |---|---|
 | Detector mAP50 | 0.901 |
 | Detector mAP50-95 | 0.715 |
@@ -97,40 +130,32 @@ diffusion-based generation pipeline.
 ## Project structure
 
 ```
-ev-battery-cv/
+ev-battery-vision-pipeline/
+├── paper/                      ← LaTeX source + figures for publication [2]
 ├── data/
-│   ├── detector/
-│   │   ├── images/{train, val, test}/
-│   │   └── labels/{train, val, test}/
-│   └── classifier/
-│       ├── train/{good, bad}/
-│       └── test/{good, bad}/
+│   ├── sources/                ← raw datasets, one folder per origin (gitignored)
+│   ├── detector/               ← merged train/val/test splits
+│   ├── classifier/             ← good/bad module crops
+│   └── labels_release/         ← 16,945 polygon masks, published here
 ├── models/
 │   ├── detector/
-│   │   ├── stage1/weights/best.pt
-│   │   ├── specialist_yolov8n/weights/best.pt   ← --model specialist
-│   │   ├── generalist_yolo11n/weights/best.pt    ← --model generalist_yolo
-│   │   └── generalist_rfdetr/                    ← --model generalist_rfdetr
-│   │       └── README.md                            (weights downloaded separately)
-│   └── classifier/
-│       ├── resnet18_binary.pth
-│       └── class_map.json
+│   │   ├── baseline_yolov8n_stage1/
+│   │   ├── specialist_yolov8n/       ← --model specialist
+│   │   ├── generalist_yolo11n/       ← --model generalist_yolo
+│   │   └── generalist_rfdetr/        ← --model generalist_rfdetr (weights fetched separately)
+│   └── classifier_resnet18/
 ├── scripts/
-│   ├── model_zoo.py            ← model registry; one interface over YOLO + RF-DETR
-│   ├── download_dataset.py     ← get public EV battery data from Roboflow
-│   ├── remap_labels.py         ← remap Roboflow 7-class → paper 2-class (REQUIRED)
-│   ├── augment_busbars.py      ← busbar-targeted recall-boost augmentation
-│   ├── auto_crop_modules.py    ← crop module ROIs from detector for classifier sorting
-│   ├── train_detector.py       ← Stage 1 + Stage 2 YOLOv8n training
-│   ├── train_classifier.py     ← ResNet18 binary classifier training
-│   ├── pipeline_inference.py   ← full two-stage inference + triage output
-│   ├── webcam_demo.py          ← live webcam / video two-stage demo
-│   ├── compare_detectors.py    ← metric-matched comparison across all models
-│   └── evaluate.py             ← detector + classifier + lighting evaluation
-├── outputs/results/            ← annotated output images saved here
-├── dataset.yaml                ← YOLO dataset config
+│   ├── common/     model_zoo.py  ← model registry; one interface over YOLO + RF-DETR
+│   ├── data_prep/  download, remap, audit, auto-label, synthesise (14 scripts)
+│   ├── train/      train_detector.py, train_classifier.py
+│   ├── eval/       evaluate, compare_detectors, benchmarks, calibration (7)
+│   └── inference/  pipeline_inference, webcam_demo, inference_api, anomaly_condition
+├── notebooks/                  ← Colab training notebooks
+├── docs/                       ← plans, dataset provenance, prior-art surveys
 └── requirements.txt
 ```
+
+Full layout and the model registry: [docs/REPO_STRUCTURE.md](docs/REPO_STRUCTURE.md).
 
 ---
 
