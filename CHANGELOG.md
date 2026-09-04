@@ -11,6 +11,41 @@ and the measured result where relevant. Maintained across work sessions.
 
 ## 2026-09-04
 
+### Model-based positive control PASSES, but the "exactly one source" claim does not
+- Screen recomputed with the matched-budget detector on a stratified sample of 1,628
+  training images across 11 sources, with a 100-instance floor per source.
+  The val split could not be used: it contains only two sources (gqljq and mtech),
+  which cannot support a per-source outlier test.
+
+  | source | original | manipulated | delta |
+  |---|---|---|---|
+  | battery_comp | 1.000 | 1.000 | 0.000 |
+  | other | 0.999 | 0.989 | -0.010 |
+  | final_mobilenet | 0.985 | 0.985 | 0.000 |
+  | edfw3 | 0.982 | 0.973 | -0.009 |
+  | bmw_i3 | 0.967 | 0.950 | -0.017 |
+  | **gqljq (manipulated)** | **0.941** | **0.667** | **-0.274** |
+  | automated | 0.641 | 0.591 | -0.050 |
+  | mtech | 0.097 | 0.097 | 0.000 |
+
+- **Control passes.** The manipulated source moves from 6th place and unflagged to
+  flagged, dropping 0.274 while no other source moves more than 0.050. The flagged set
+  gains exactly one member, gqljq, and loses none.
+- **Correction required.** The screen flags **two** sources on the original corpus,
+  mtech (0.097) and automated (0.641), not one. The paper's "exactly one source falls
+  below the fence" sentence came from the earlier evaluation on a different split and
+  must be rewritten. The two screens also disagree on `automated`: the model-based
+  screen flags it, the training-free granularity index does not (15.0 against a fence
+  of 29.02), which indicates the model-based screen is the more sensitive of the two.
+- Under-powered sources are excluded rather than reported: ybmvt (46 module instances)
+  and ue_rav4 (94) fall below the 100-instance floor. An earlier 60-image sample
+  produced a spurious 0.422 -> 0.066 swing on ybmvt purely from sampling noise, which
+  is why the floor exists.
+- `last_exp4` contributes **0 module instances**: it annotates busbars only. Consistent
+  with its 0.0 module share in the annotation statistics.
+- Scores are inflated because the screen runs on training images. Only the relative
+  ordering is used, and that is a stated precondition of the procedure.
+
 ### RF-DETR: peaks at epoch 3-4, then degrades for the remaining 56 epochs
 - Matched-budget RF-DETR-Nano (60 epochs, 672 px, lr 1e-4, batch 8 x grad-accum 2) on
   the same 4,425-image corpus, evaluated each epoch on the restored 252-image
