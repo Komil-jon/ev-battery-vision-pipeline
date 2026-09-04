@@ -11,6 +11,28 @@ and the measured result where relevant. Maintained across work sessions.
 
 ## 2026-09-04
 
+### RF-DETR: peaks at epoch 3-4, then degrades for the remaining 56 epochs
+- Matched-budget RF-DETR-Nano (60 epochs, 672 px, lr 1e-4, batch 8 x grad-accum 2) on
+  the same 4,425-image corpus, evaluated each epoch on the restored 252-image
+  multi-source val split.
+- Seed 0, complete: best EMA mAP@50--95 **0.4657 at epoch 3**, no improvement across
+  the remaining 56 epochs, final epoch 60 down to **0.3390** (mAP@50 0.4331 against
+  0.6221 at epoch 2). A 27% relative decline from peak.
+- Seed 1, stopped at epoch 9: best EMA **0.4703 at epoch 4**. The early peak
+  reproduces; the run was halted because the pattern was established and the remaining
+  51 epochs cost 3 h for no new information.
+- Unlike the YOLO decline, this is not a validation artefact. Val here is 252 images
+  spanning every source, so the degradation is genuine overfitting: the pretrained
+  checkpoint already fits this data and further fine-tuning destroys it.
+- **Reportable finding:** self-supervised pretraining arrives already fitted. RF-DETR
+  reaches its best within four epochs while YOLO11n continues improving far longer,
+  which reframes what the pretrained initialisation buys.
+- Consequence for scoring: RF-DETR's regular (non-EMA) checkpoint reports 0.0000, so
+  only the EMA weights are usable. The comparison must therefore report four cells,
+  final and best for each architecture, rather than a single "final checkpoint" rule.
+- Declared limitation: RF-DETR n=1 at the full 60-epoch budget against YOLO11n n=3.
+  Compute-bound, and stated as such.
+
 ### FINDING: single-source validation inverts model selection, it does not merely bias it
 - Matched-budget YOLO11n runs (60 epochs, 640 px, SGD, seeds 1 and 2) on the full
   4,425-image corpus. Validation during training used the only val images recovered,
