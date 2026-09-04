@@ -58,7 +58,7 @@ source flagged by the proposed procedure raises module mAP@50 from 0.547 to
 0.774, with no additional data and no additional training budget.
 \item Quantification of the single-source evaluation gap for this task: 0.818
 mAP@50 in domain against 0.277 across facilities, a relative loss of 66\%.
-\item A characterisation of what a frozen self-supervised backbone supplies in
+\item A characterisation of what a self-supervised pretrained backbone supplies in
 this setting. No advantage is observed on convention-consistent sources, at 0.771
 against 0.774 on the module class; the entire aggregate advantage arises from
 graceful degradation under annotation shift.
@@ -164,7 +164,7 @@ annotation standard.
 
 \noindent Self-supervised backbones such as DINOv2 \citep{dinov2} learn features
 that transfer without task-specific fine-tuning, and detection transformers
-\citep{carion2020detr} built on frozen variants of them \citep{rfdetr} are reported to generalise better than
+\citep{carion2020detr} initialised from them \citep{rfdetr} are reported to generalise better than
 detectors trained from scratch in low-data regimes. However, that claim has been
 established principally on natural imagery with a consistent annotation
 protocol. Whether it holds on the cluttered, specular imagery of battery
@@ -331,8 +331,10 @@ parameters and was trained from COCO initialisation \citep{lin2014coco} on all 1
 sources for 150 epochs at 640\,px with stochastic gradient descent.
 
 The \emph{multi-source RF-DETR} configuration \citep{rfdetr} is a real-time
-detection transformer with a frozen DINOv2 backbone \citep{dinov2}, fine-tuned on
-the same data for 60 epochs at 384\,px. The resolution and epoch budget are the
+detection transformer initialised from the published RF-DETR-Nano checkpoint, whose
+backbone derives from self-supervised DINOv2 pretraining \citep{dinov2}, fine-tuned
+end to end on the same data. All 30.6\,M parameters are updated; the backbone is not
+frozen. The resolution and epoch budget are the
 architecture defaults published with the model; the consequence for
 comparability is stated in Section~\ref{sec:limits}.
 
@@ -626,7 +628,7 @@ RF-DETR & \textbf{0.502} & \textbf{0.312} & \textbf{0.680} & \textbf{0.353} \\
 Taken alone that comparison is misleading. Table~\ref{tab:screened} reports the
 same two models on the screened subset of 177 images, on which they are
 effectively tied: 0.558 against 0.544 overall, 0.771 against 0.774 on the module
-class, and 0.366 against 0.344 on the busbar class. The frozen self-supervised
+class, and 0.366 against 0.344 on the busbar class. The self-supervised pretrained
 backbone therefore confers no advantage on conventionally annotated packs.
 
 \begin{table}[t]
@@ -651,7 +653,7 @@ The aggregate advantage therefore arises entirely from behaviour under annotatio
 shift. Reintroducing the flagged source reduces YOLO11n module accuracy from
 0.774 to 0.547, a loss of 0.227, but reduces RF-DETR module accuracy only from
 0.771 to 0.680, a loss of 0.091. The defensible claim is correspondingly narrow:
-a frozen self-supervised backbone does not detect ordinary modules more
+a self-supervised pretrained backbone does not detect ordinary modules more
 accurately, but it degrades considerably more gracefully when the definition of
 the target moves. On a line receiving heterogeneous packs, graceful degradation
 is the property of practical value, and the proposed screening procedure and the
@@ -760,7 +762,7 @@ a model that is trained in any case.
 Thirdly, the choice of backbone and the curation of the corpus address the same
 failure mode by different means, and the results indicate that curation is the
 more effective of the two. Screening recovers 0.227 module mAP@50 for YOLO11n,
-whereas substituting a frozen self-supervised backbone recovers 0.133 of that
+whereas substituting a self-supervised pretrained backbone recovers 0.133 of that
 same loss at substantially greater inference cost. The two are nevertheless
 complementary, since a divergent source that has not been identified is still
 handled more gracefully by the self-supervised backbone.
@@ -814,7 +816,7 @@ the same detector lost two thirds of its accuracy when moved across pack sources
 Annotation convention, rather than architecture, proved the dominant failure
 mode, and the proposed convention-consistency screening procedure identified the
 divergent source from a single training run and recovered 0.227 module mAP@50 by
-excluding it. A frozen self-supervised backbone was shown to supply robustness to
+excluding it. A self-supervised pretrained backbone was shown to supply robustness to
 annotation shift rather than improved detection of ordinary modules, which
 narrows the circumstances under which it should be preferred.
 

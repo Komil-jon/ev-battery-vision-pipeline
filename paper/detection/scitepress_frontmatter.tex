@@ -33,8 +33,8 @@ convention-divergent sources from a single merged-corpus training run using a
 robust outlier criterion on per-source accuracy. Applying the proposed procedure
 and excluding the one flagged source raises module mAP@50 from 0.547 to 0.774
 without additional data or training budget. Two architectures are compared under
-an identical evaluation protocol. A detection transformer built on a frozen
-self-supervised backbone confers no advantage on convention-consistent sources,
+an identical evaluation protocol. A detection transformer initialised from
+self-supervised pretraining confers no advantage on convention-consistent sources,
 at 0.771 against 0.774, but degrades far more gracefully when the annotation
 convention shifts, at 0.680 against 0.547, which isolates robustness to
 annotation shift rather than detection accuracy as the property such backbones

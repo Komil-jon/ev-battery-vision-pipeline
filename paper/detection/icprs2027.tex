@@ -45,7 +45,7 @@ outlier criterion, and excluding the one flagged source raises module mAP@50 fro
 annotation geometry over 4,760 label files, flags the same source with no training
 at all and passes a positive control in which a consensus source relabelled to a
 sub-component convention is flagged while every genuine consensus source is not.
-A detection transformer on a frozen self-supervised backbone is shown to confer no
+A detection transformer on a self-supervised pretrained backbone is shown to confer no
 advantage on convention-consistent sources (0.771 against 0.774) while degrading
 far more gracefully under convention shift (0.680 against 0.547). Four negative
 results constrain the design space. The benchmark and evaluation code are released.
@@ -111,7 +111,7 @@ source flagged by the proposed procedure raises module mAP@50 from 0.547 to
 \item Quantification of the single-source evaluation gap for this task: 0.818
 mAP@50 in domain against 0.277 across facilities, a relative loss of 66\%
 (Section~\ref{sec:res-gap}).
-\item A characterisation of what a frozen self-supervised backbone supplies in
+\item A characterisation of what a self-supervised pretrained backbone supplies in
 this setting. No advantage is observed on convention-consistent sources (0.771
 against 0.774); the entire aggregate advantage arises from graceful degradation
 under annotation shift (Section~\ref{sec:res-arch}).
@@ -296,8 +296,9 @@ from COCO initialisation on all 13 sources for 150 epochs at 640\,px with
 stochastic gradient descent.
 
 \textbf{Multi-source RF-DETR.} RF-DETR-Nano \cite{rfdetr}, a real-time detection
-transformer with a frozen DINOv2 \cite{dinov2} backbone, fine-tuned on the same
-data for 60 epochs at 384\,px. The resolution and epoch budget are the
+transformer initialised from the published RF-DETR-Nano checkpoint, whose backbone
+derives from self-supervised DINOv2 pretraining \cite{dinov2}, fine-tuned end to end
+on the same data. All 30.6\,M parameters are updated; the backbone is not frozen. The resolution and epoch budget are the
 architecture defaults; the consequence for comparability is stated in
 Section~\ref{sec:limits}.
 
@@ -506,7 +507,7 @@ RF-DETR & full & \textbf{0.502} & \textbf{0.312} & 0.680 & 0.353 \\
 
 Taken alone that comparison is misleading. Table~\ref{tab:detectors} also reports both models on the screened
 subset of 177 images, on which they are effectively tied: 0.558 against 0.544 overall, 0.771 against 0.774 on the module
-class, and 0.366 against 0.344 on the busbar class. The frozen self-supervised
+class, and 0.366 against 0.344 on the busbar class. The self-supervised pretrained
 backbone therefore confers no advantage on conventionally annotated packs.
 
 
@@ -514,8 +515,8 @@ backbone therefore confers no advantage on conventionally annotated packs.
 The aggregate advantage arises entirely from behaviour under annotation shift.
 Reintroducing the flagged source reduces YOLO11n module accuracy from 0.774 to
 0.547, a loss of 0.227, but reduces RF-DETR module accuracy only from 0.771 to
-0.680, a loss of 0.091. The defensible claim is correspondingly narrow: a frozen
-self-supervised backbone does not detect ordinary modules more accurately, but it
+0.680, a loss of 0.091. The defensible claim is correspondingly narrow: a
+self-supervised pretrained backbone does not detect ordinary modules more accurately, but it
 degrades considerably more gracefully when the definition of the target moves. On
 a line receiving heterogeneous packs, graceful degradation is the property of
 practical value.
@@ -600,8 +601,8 @@ accuracy sufficiently to mislead, the same detector losing two thirds of its
 accuracy across pack sources. Annotation convention, rather than architecture,
 proved the dominant failure mode: the proposed screening procedure identified the
 divergent source from a single training run and recovered 0.227 module mAP@50, and
-a training-free variant flagged the same source with no training at all. A frozen
-self-supervised backbone supplies robustness to annotation shift rather than
+a training-free variant flagged the same source with no training at all. A
+self-supervised pretrained backbone supplies robustness to annotation shift rather than
 improved detection of ordinary modules.
 
 Taken together, these results indicate that dataset design, and specifically
