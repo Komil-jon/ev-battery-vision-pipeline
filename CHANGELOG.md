@@ -20,23 +20,25 @@ and the measured result where relevant. Maintained across work sessions.
   throughout (2.2 -> 1.34 and 3.3 -> 1.68). Reproducible across both seeds.
 - Evaluated instead on 385 images stratified across all 11 sources:
 
-  | checkpoint | multi-source mAP@50 | divergent-source val mAP@50 |
-  |---|---|---|
-  | s1 `best.pt` (selected on divergent val) | 0.472 | 0.340 |
-  | s1 `last.pt` (fixed budget)              | **0.692** | 0.066 |
-  | s2 `best.pt` | 0.474 | 0.370 |
-  | s2 `last.pt` | **0.698** | 0.045 |
+  | checkpoint | s0 | s1 | s2 | mean | sd |
+  |---|---|---|---|---|---|
+  | `last.pt` (fixed budget) | 0.699 | 0.692 | 0.698 | **0.696** | **0.003** |
+  | `best.pt` (selected on divergent val) | 0.435 | 0.472 | 0.474 | 0.461 | 0.018 |
 
-- **The ranking is exactly inverted.** The checkpoint the divergent val calls best is
-  the worse model on the consensus convention by 0.22 mAP@50, and the checkpoint it
-  calls worthless (0.045) is the better one. Single-source validation does not merely
-  add noise to model selection; it reverses it, and shipping on `best.pt` would have
-  cost roughly 32% relative accuracy.
+  On the divergent val split itself the ordering is reversed: `best.pt` scores
+  0.34-0.37 there and `last.pt` scores 0.045-0.066.
+
+- **The ranking is exactly inverted, across all three seeds.** The checkpoint the
+  divergent val calls best is the worse model on the consensus convention by
+  **0.235 mAP@50 (+51% relative)**, and the checkpoint it calls worthless is the better
+  one. Single-source validation does not merely add noise to model selection; it
+  reverses it. The effect is 80x the seed spread (0.235 against sd 0.003), so it cannot
+  be attributed to run-to-run variance.
 - This retrospectively justifies disabling early stopping and taking the final
   checkpoint. Had the Ultralytics default been used, every number in the matched-budget
   experiment would have been contaminated by selection against the outlier source.
-- Seed variance is small: 0.692 vs 0.698, a spread of 0.006. The matched-budget
-  comparison will therefore carry tight intervals.
+- Seed variance is very small: sd 0.003 across three seeds for `last.pt`. The
+  matched-budget architecture comparison will therefore carry tight intervals.
 - Caveat to state in the paper: the 385-image probe is drawn from training images, so
   the absolute values are optimistic. The `best.pt` against `last.pt` contrast is valid
   because both are scored identically on the same images; the inversion is the result,
