@@ -11,6 +11,25 @@ and the measured result where relevant. Maintained across work sessions.
 
 ## 2026-09-04
 
+### Papers rewritten on the matched-budget results
+- Both papers rebuilt around the measured results. ICPRS 7 pages (6 + refs), zero
+  overfull boxes, 26 references all cited and defined. SCITEPRESS 12 of 12 pages.
+- Results restructured: per-source screening, training-free screening, positive
+  control, matched-budget architecture comparison, checkpoint-selection inversion,
+  deployment and zero-shot, negative results.
+- Contributions renumbered to six, adding the positive control and the
+  checkpoint-selection inversion. Negative results now five, adding the finding that
+  prolonged fine-tuning degrades an already-fitted pretrained model.
+- **Retracted:** "exactly one source falls below the fence" (two are flagged) and the
+  "+0.227 recovery" figure, both artefacts of the superseded confounded runs.
+- Removed from Limitations: the single-training-run and no-confidence-interval
+  caveats, both now answered. Added: RF-DETR n=1 at the full budget, the train-derived
+  screening basis with its memorisation caveat, the 100-instance floor, and the source
+  that became unavailable mid-study.
+- Figures regenerated: per-source screen with fence, positive control across both
+  screens, matched-budget architecture comparison, and the inversion with bootstrap
+  intervals. The old gap, per-class and zero-shot figures are superseded.
+
 ### Contribution 4 SURVIVES the matched budget: RF-DETR degrades far more gracefully
 - RF-DETR-Nano seed 0, final EMA checkpoint (epoch 60), scored per source on the same
   1,628-image stratified screening sample as YOLO11n, same metric, same threshold.
