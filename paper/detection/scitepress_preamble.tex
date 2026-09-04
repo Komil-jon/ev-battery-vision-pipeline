@@ -1,0 +1,40 @@
+%% ---------------------------------------------------------------------------
+%% SCITEPRESS-compatible preamble (VISAPP / ICPRAM / ROBOVIS, INSTICC).
+%%
+%% TO USE THE OFFICIAL TEMPLATE: download SCITEPRESS.sty and apalike.sty from
+%% https://www.scitepress.org/ , place them beside this file, then replace the
+%% geometry/font block marked APPROXIMATION below with:
+%%     \usepackage{pslatex}
+%%     \usepackage{apalike}
+%%     \usepackage{SCITEPRESS}
+%% Everything else in this file and in body_scitepress.tex is already written to
+%% the official template's conventions (\authorname, \affiliation, \email,
+%% \keywords, \abstract, author-year citations, one-column title then two-column
+%% body).
+%% ---------------------------------------------------------------------------
+\documentclass[a4paper,twoside,10pt]{article}
+
+%% ---- APPROXIMATION of SCITEPRESS.sty geometry and fonts -------------------
+\usepackage[a4paper,top=2.4cm,bottom=2.4cm,left=1.9cm,right=1.9cm]{geometry}
+\usepackage{times}
+\usepackage[round]{natbib}
+\bibliographystyle{apalike}
+\setlength{\columnsep}{0.6cm}
+\newcommand{\authorname}[1]{{\large #1}}
+\newcommand{\affiliation}[1]{\\ \textit{#1}}
+\newcommand{\email}[1]{\\ \texttt{#1}}
+\newcommand{\keywords}[1]{\vspace{4pt}\noindent\textbf{Keywords:}\quad #1\par}
+\renewcommand{\abstract}[1]{\vspace{6pt}\noindent\textbf{Abstract:}\quad #1\par}
+%% ---- end APPROXIMATION ----------------------------------------------------
+
+\usepackage{amssymb,amstext,amsmath}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+%% Narrow two-column measure needs looser line breaking than the LaTeX default
+\tolerance=1200
+\emergencystretch=2em
+\hbadness=4000
+\pagestyle{empty}
+%% \uppercase in section titles is the SCITEPRESS convention; keep it out of PDF bookmarks
+\pdfstringdefDisableCommands{\let\uppercase\relax}

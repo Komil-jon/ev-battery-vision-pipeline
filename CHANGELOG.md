@@ -9,6 +9,124 @@ and the measured result where relevant. Maintained across work sessions.
 
 ---
 
+## 2026-09-04
+
+### Training-free convention screen + positive control (both new contributions)
+- **Training-free screen delivered.** Listed as future work last session; now computed
+  from the 4,760 label files alone, no images and no trained model. Granularity index
+  $g_i = n_i / s_i$ (module instances per image over median normalised module scale).
+  MTech scores **40.7**, next highest 15.0, corpus median 9.00, $k=3$ fence **29.02**:
+  exactly one source flagged, and it is the same one the model-based screen flags.
+  Two methodologically independent screens agreeing on the same source.
+  Tool: `scripts/eval/annotation_statistics.py`.
+- **Positive control PASSES.** `scripts/data_prep/synth_convention_shift.py` relabels a
+  consensus source to a sub-component convention (each module box -> 3x2 grid of inset
+  sub-boxes; no image altered, no busbar touched). gqljq granularity **11.1 -> 185.8**,
+  flagged after and not before, while every genuine consensus source stays below the
+  fence. This answers the strongest reviewer objection: the screen is no longer
+  validated only on the case that motivated it. The model-based screen's control still
+  needs a GPU retrain on the manipulated corpus; stated as future work, not claimed.
+- Both papers updated. Added the MVML self-citation with an explicit
+  "Relation to prior work" statement (the single-source specialist *is* that paper's
+  detector), plus MVTec AD, DETR and the Zhou domain-generalisation survey.
+- ICPRS held at 7 pages by dropping `fig_gap` (it duplicated Table II exactly), merging
+  the two result tables, folding zero-shot into the deployment subsection, moving Data
+  Availability to a first-page footnote, and cutting the abstract to 259 words.
+- `paper/detection/IMAGES_NEEDED.md` lists the exact filenames required for the
+  qualitative and convention figures. Detector images are not in the repo (~4 GB,
+  removed 2026-07-14); labels are all present.
+
+### Reference audit: two citations were fabricated, now corrected
+- Verified every reference against the CrossRef API. Three were wrong, two of them
+  invented outright when author-less bibitems inherited from the ICMRA draft were
+  filled in:
+  | key | was (wrong) | is (verified) |
+  |---|---|---|
+  | `cvmodule2023` | Wuest, Fuchs, Sauer; Prod. Eng. 17:707-717 | **Gerlitz, Enslin, Fleischer; Prod. Eng. 18(3-4):393-401** |
+  | `screwcompare2026` | Rastegarpanah, Hesami, Stolkin | **Naseri, Khwajazada, Yang; IJAMT 144(1-2):1107-1119** |
+  | `screwbatt2023` | Zhang, Zhang, Wang, Zhang, Li, Chen | **Li, Zhang, Zhang, Zhang, Peng, Wang, Song, Chen** (8 authors) |
+  | `wegener2015` | Andrew, Scott | Andrew, Stefan |
+- Verified correct and unchanged: `screwrcnn2021`, `tan2025screws`, `zang2024robotic`,
+  `rousseeuw1993mad`, `ghiasi2021copypaste`.
+
+### Two near-neighbour VISAPP 2026 papers found and cited
+- `penquitt2026` (Penquitt, Klees, Cakaj, Kondermann, Rottmann, Schmarje) corrects
+  label errors in object-detection datasets and found 18% bad labels in KITTI
+  pedestrians. Closest published neighbour; not citing it at VISAPP would have been a
+  visible gap. Differentiated in the related work: they correct errors *within* one
+  agreed annotation standard, whereas this work identifies disagreement *about the
+  standard itself*, which no within-convention correction can reconcile.
+- `abouakar2026` (BMW Group / FEMTO-ST) trains industrial detectors on multi-source
+  real, rendered and generative data. Differentiated: their sources share one
+  annotation standard by construction; ours each carry an independently authored one.
+- Reference count now 18 (IEEE) / 24 (bib). SCITEPRESS build grew to 10 of 12 pages.
+
+### Detection-only paper drafted for four venues
+- Scope fixed: **detection only**. Condition assessment dropped for this paper
+  (14 real damaged crops is too few); localisation deferred entirely.
+- Reframed around novelty rather than accuracy. Five stated contributions:
+  the cross-facility benchmark; a **convention-consistency screening procedure**;
+  the quantified single-source evaluation gap; the characterisation of the frozen
+  self-supervised backbone as buying robustness-to-annotation-shift; four negative
+  results.
+- **New methodological contribution formalised.** The per-source collapse, previously
+  only an observation, is now a screening procedure: flag source $i$ when
+  $a_i < \mathrm{med}(a) - k\cdot 1.4826\cdot \mathrm{mad}(a)$. At $k=3$ the fence
+  falls at 0.330, exactly one source is flagged, and the partition is stable for all
+  $k \in [1.5, 4.5]$. Excluding it recovers **+0.227 module mAP@50** (0.547 -> 0.774).
+- Four submission-ready builds in `paper/detection/`:
+  | file | venue | format | pages |
+  |---|---|---|---|
+  | `icprs2027.tex` | ICPRS 2027 (25 Oct) | IEEEtran | 7 (6 + refs) |
+  | `visapp2027.tex` | VISAPP 2027 (15 Sep) | SCITEPRESS | 9 of 12 |
+  | `icpram2027.tex` | ICPRAM 2027 (15 Sep) | SCITEPRESS | 9 of 12 |
+  | `robovis2027.tex` | ROBOVIS 2027 (15 Sep) | SCITEPRESS | 9 of 12 |
+- The three SCITEPRESS files share `body_scitepress.tex` and are identical by design;
+  only one may be submitted (dual submission otherwise).
+- Written to the language specification in `technical-paper-language-prompt.md`:
+  passive voice for what was done, "this paper presents" for contributions, prior-work
+  sentences each carrying a limitation clause, every parameter given a stated origin,
+  no em dashes outside table placeholders, no hype vocabulary. Verified by script.
+- Honesty items now stated in the body, not buried: the 66% figure is measured against
+  an in-domain benchmark that is itself the divergent source; single seed, no CIs;
+  unequal training budgets between the two detectors; annotations inherited from the
+  sources rather than created here; CC BY-NC-SA contamination at 24% of training data.
+- New figures in `paper/detection/figures/` from `make_figures.py`: generalisation gap,
+  per-source screening with the MAD fence, per-class full vs screened, zero-shot transfer.
+
+### Venue longlist for the split vision paper (Paper A)
+- Decided to split the paper: **Paper A** = vision/dataset/benchmark, **Paper B** =
+  localisation + manipulation built on the published MVML detector. The split removes
+  the "two papers stapled together" criticism outright.
+- Assessed honestly: Paper A is the stronger half and is close to submittable.
+  Paper B is *not a paper yet* — its only new content would be the mask-centroid
+  integration experiment, which has not been run.
+- Longlist with verified deadlines added to `docs/VENUE_STRATEGY.md` (Appendix A).
+- **Primary target: ICPRS 2027**, deadline 25 Oct 2026, notify 28 Dec 2026, Bordeaux,
+  IEEE Xplore, IAPR-endorsed. It solicits **dataset papers** as an explicit category,
+  uses IEEE 6+1 page format (what the paper already is), and has a student prize.
+- Constraint that drives ordering: VISAPP notifies 13 Nov, after the 25 Oct ICPRS
+  deadline, so the two cannot both be live. Chosen chain:
+  ICPRS (25 Oct) -> SCIA (26 Jan) -> ICPR 2027 virtual (1 Mar).
+- Cost noted: VISAPP speaker registration is EUR 725-795, *more* than ICMRA charged.
+  ICPR 2027 is virtual and therefore free of travel cost.
+
+### Decision: withdraw from ICMRA 2026, retarget the paper
+- Venue survey and objective self-assessment written to `docs/VENUE_STRATEGY.md`.
+- Verified deadlines: ICRA 2027 closes **15 Sep 2026** (Seoul, 8 pages incl. refs,
+  notification 31 Jan 2027); CASE 2027 and IROS 2027 both close **1 Mar 2027**;
+  CIRP CMS 2027 abstract 11 Sep 2026 / full paper 18 Nov 2026; ETFA 2027 ~Mar 2027.
+- **Plan: ICRA 2027 now, then CASE 2027 or IROS 2027 on 1 Mar 2027.** ICRA notifies
+  31 Jan, a month before the 1 Mar deadlines, so the first submission is a free
+  option that returns reviews in time to feed the second.
+- Honest tier placement recorded: strong CASE/ETFA paper, borderline IROS, long shot
+  at ICRA. Largest rejection risk is that the detector and the localisation stage are
+  never actually connected — the localisation still uses a fiducial on the target.
+- Pre-submission blockers logged: formal ICMRA withdrawal in writing, co-author
+  agreement, and five author-less bibliography entries to fix.
+
+---
+
 ## 2026-07-30
 
 ### BIG FINDING: 55% of the data already carries instance-segmentation masks
