@@ -11,6 +11,37 @@ and the measured result where relevant. Maintained across work sessions.
 
 ## 2026-09-04
 
+### FINDING: single-source validation inverts model selection, it does not merely bias it
+- Matched-budget YOLO11n runs (60 epochs, 640 px, SGD, seeds 1 and 2) on the full
+  4,425-image corpus. Validation during training used the only val images recovered,
+  43 frames all from the convention-divergent source.
+- On that val split, mAP@50 peaks near 0.34-0.37 around epoch 7-20 and falls to
+  0.045-0.066 by epoch 60, while box and cls training losses fall monotonically
+  throughout (2.2 -> 1.34 and 3.3 -> 1.68). Reproducible across both seeds.
+- Evaluated instead on 385 images stratified across all 11 sources:
+
+  | checkpoint | multi-source mAP@50 | divergent-source val mAP@50 |
+  |---|---|---|
+  | s1 `best.pt` (selected on divergent val) | 0.472 | 0.340 |
+  | s1 `last.pt` (fixed budget)              | **0.692** | 0.066 |
+  | s2 `best.pt` | 0.474 | 0.370 |
+  | s2 `last.pt` | **0.698** | 0.045 |
+
+- **The ranking is exactly inverted.** The checkpoint the divergent val calls best is
+  the worse model on the consensus convention by 0.22 mAP@50, and the checkpoint it
+  calls worthless (0.045) is the better one. Single-source validation does not merely
+  add noise to model selection; it reverses it, and shipping on `best.pt` would have
+  cost roughly 32% relative accuracy.
+- This retrospectively justifies disabling early stopping and taking the final
+  checkpoint. Had the Ultralytics default been used, every number in the matched-budget
+  experiment would have been contaminated by selection against the outlier source.
+- Seed variance is small: 0.692 vs 0.698, a spread of 0.006. The matched-budget
+  comparison will therefore carry tight intervals.
+- Caveat to state in the paper: the 385-image probe is drawn from training images, so
+  the absolute values are optimistic. The `best.pt` against `last.pt` contrast is valid
+  because both are scored identically on the same images; the inversion is the result,
+  not the level.
+
 ### Training-free convention screen + positive control (both new contributions)
 - **Training-free screen delivered.** Listed as future work last session; now computed
   from the 4,760 label files alone, no images and no trained model. Granularity index
