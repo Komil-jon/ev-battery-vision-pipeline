@@ -11,6 +11,45 @@ and the measured result where relevant. Maintained across work sessions.
 
 ## 2026-09-04
 
+### Contribution 4 SURVIVES the matched budget: RF-DETR degrades far more gracefully
+- RF-DETR-Nano seed 0, final EMA checkpoint (epoch 60), scored per source on the same
+  1,628-image stratified screening sample as YOLO11n, same metric, same threshold.
+
+  | | consensus mean | mtech (divergent) | automated (mild outlier) |
+  |---|---|---|---|
+  | YOLO11n `last.pt` | **0.979** | 0.097 | 0.641 |
+  | RF-DETR final EMA | 0.955 | **0.337** | **0.779** |
+
+- **RF-DETR is slightly worse on ordinary packs (0.955 against 0.979) and 3.5x better
+  on the convention-divergent source (0.337 against 0.097).** That is precisely the
+  claim the paper makes, now measured under a matched 60-epoch budget rather than the
+  earlier 150-vs-60 mismatch. The claim stands and is stronger than before.
+- The screen flags the same two sources for both architectures (mtech, automated), so
+  the screening procedure is architecture-independent on this corpus.
+- **RF-DETR's own checkpoint selection is also inverted.** Its val said epoch 3 was
+  best (0.4657) and epoch 60 far worse (0.3390), but on the multi-source screening
+  sample the epoch-3 checkpoint scores 0.719 consensus / 0.079 mtech against the
+  epoch-60 checkpoint's 0.955 / 0.337. The val-selected checkpoint is worse on both
+  axes. The same inversion therefore appears in both architectures.
+- **Caveat that must be stated in the paper.** The screening sample is drawn from
+  training images, so later checkpoints are favoured by memorisation and the absolute
+  size of the final-vs-best gap is inflated. What memorisation does not explain is the
+  *pattern*: memorising would lift the final checkpoint uniformly, whereas here it
+  gains on the consensus sources while losing on the divergent one. The convention
+  trade-off is real; the magnitude is not directly comparable to a held-out figure.
+
+### Bootstrap confidence intervals: the inversion does not overlap
+- 500 bootstrap resamples over a 385-image stratified probe, module class, seed 0:
+
+  | checkpoint | module mAP@50 | 95% CI |
+  |---|---|---|
+  | `last.pt` | 0.735 | [0.659, 0.808] |
+  | `best.pt` | 0.552 | [0.471, 0.626] |
+
+- The intervals are separated by 0.033 and do not touch. Combined with the three-seed
+  agreement (sd 0.003), the model-selection inversion is established on three
+  independent grounds: seed stability, effect size, and interval separation.
+
 ### Model-based positive control PASSES, but the "exactly one source" claim does not
 - Screen recomputed with the matched-budget detector on a stratified sample of 1,628
   training images across 11 sources, with a 100-instance floor per source.
