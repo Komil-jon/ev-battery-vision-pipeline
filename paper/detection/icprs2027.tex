@@ -1,0 +1,707 @@
+%% ICPRS 2027 -- 16th International Conference on Pattern Recognition Systems
+%% IEEE conference format, 6 pages + 1 page of references. Build: tectonic -X compile icprs2027.tex
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+
+\newcommand\blfootnote[1]{%
+  \begingroup\renewcommand\thefootnote{}\footnote{#1}\addtocounter{footnote}{-1}\endgroup}
+\begin{document}
+
+\title{Annotation Convention, Not Architecture, Limits\\Cross-Facility Detection of Electric Vehicle\\Battery Components}
+
+\author{
+\IEEEauthorblockN{Komiljon Kosimov and Shiv Ashutosh Katiyar}
+\IEEEauthorblockA{\textit{Department of Mechanical Engineering,
+University of Birmingham}, Birmingham B15 2TT, United Kingdom \\
+kxk445@student.bham.ac.uk, ~ s.a.katiyar@bham.ac.uk}
+}
+
+\maketitle
+\blfootnote{Benchmark definition, per-source provenance and licence record, audit tooling, evaluation code and detector weights: \url{https://github.com/Komil-jon/ev-battery-vision-pipeline}}
+
+\begin{abstract}
+Automated disassembly of end-of-life electric vehicle (EV) battery packs depends on
+a detector that locates modules and busbars across the pack types a recycling line
+actually receives. Published detectors for this task are trained and validated at a
+single facility, and the accuracy they report is shown here to be a poor predictor
+of behaviour elsewhere. This paper presents a cross-facility benchmark of 225 images
+and 780 instances, assembled from 13 independent public sources spanning ten pack
+families and verified free of train-test leakage by perceptual hashing. On it, a
+single-source specialist falls from 0.818 to 0.277 mAP@50. Disaggregating by source
+shows the loss is concentrated rather than spread: per-source module accuracy spans
+0.995 to 0.043, and the collapse occurs on one source whose annotation convention
+differs from the consensus. This is developed into a screening procedure that
+identifies convention-divergent sources from a single training run using a robust
+outlier criterion, and excluding the one flagged source raises module mAP@50 from
+0.547 to 0.774 with no additional data. A training-free variant, computed from
+annotation geometry over 4,760 label files, flags the same source with no training
+at all and passes a positive control in which a consensus source relabelled to a
+sub-component convention is flagged while every genuine consensus source is not.
+A detection transformer on a frozen self-supervised backbone is shown to confer no
+advantage on convention-consistent sources (0.771 against 0.774) while degrading
+far more gracefully under convention shift (0.680 against 0.547). Four negative
+results constrain the design space. The benchmark and evaluation code are released.
+\end{abstract}
+
+\begin{IEEEkeywords}
+object detection, dataset quality, annotation consistency, domain generalisation,
+cross-dataset evaluation, electric vehicle batteries, circular economy
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+Electric vehicles are reaching end of life in large numbers, and the packs they
+carry are simultaneously a hazard and a source of critical raw materials. Lithium,
+cobalt and nickel are all classified by the European Commission as critical raw
+materials with elevated supply risk \cite{ec_crm,harper2019}, and European
+recycling capacity demand is projected to reach 170\,GWh by 2035 \cite{te2024}.
+Disassembly of these packs remains predominantly manual. The operation is
+labour intensive, slow, and exposes workers to high voltage and to the risk of
+thermal runaway, which motivates a substantial and growing research effort on
+robotic disassembly \cite{zang2024robotic,tan2025screws}.
+
+Every such system begins with perception. Before a manipulator can unfasten,
+grasp or lift a component, the battery modules and the busbars that connect them
+must be located in the image. The established approach is a supervised object
+detector trained on imagery collected at one facility or from one experimental
+rig. This practice conceals a problem specific to the application. A recycling
+line does not receive a single pack type; it receives whatever arrives on a given
+day, from different manufacturers, in different states of disassembly, under
+whatever illumination the building provides. Accuracy measured on the
+distribution a detector was trained on therefore carries limited information
+about the next pack through the door.
+
+To quantify this, a cross-facility benchmark for EV battery component detection
+is required, and none exists. Every study surveyed in
+Section~\ref{sec:related} collected and annotated its own imagery, and none
+released it. To address this gap, this paper assembles a corpus of 4,425
+training images from 13 independent public sources spanning ten EV pack families,
+constructs a held-out cross-facility benchmark of 225 images and 780 instances,
+and evaluates detectors on it under a single harmonised protocol.
+
+The principal finding is that the dominant failure mode is not image difficulty
+and not model capacity. It is disagreement between sources about what the target
+class denotes. Per-source module accuracy spans 0.995 to 0.043, and inspection
+confirms that the collapsing source annotates small internal sub-components as
+modules while every other source annotates pack-level modules. The detector
+learned the majority convention and applied it consistently; the collapse is a
+disagreement about the target, not a failure of perception.
+
+This paper makes the following contributions:
+
+\begin{enumerate}
+\item A cross-facility benchmark for EV battery module and busbar detection,
+comprising 225 images and 780 instances drawn from 13 sources and ten pack
+families, verified free of train-test leakage by perceptual hashing and released
+with a per-source provenance and licence record (Section~\ref{sec:data}).
+\item A convention-consistency screening procedure that identifies
+annotation-divergent sources from a single merged-corpus training run, using a
+robust outlier criterion on per-source disaggregated accuracy. Excluding the one
+source flagged by the proposed procedure raises module mAP@50 from 0.547 to
+0.774 with no additional data and no additional training budget
+(Sections~\ref{sec:screen} and \ref{sec:res-screen}).
+\item Quantification of the single-source evaluation gap for this task: 0.818
+mAP@50 in domain against 0.277 across facilities, a relative loss of 66\%
+(Section~\ref{sec:res-gap}).
+\item A characterisation of what a frozen self-supervised backbone supplies in
+this setting. No advantage is observed on convention-consistent sources (0.771
+against 0.774); the entire aggregate advantage arises from graceful degradation
+under annotation shift (Section~\ref{sec:res-arch}).
+\item A training-free variant of the screen, computed from annotation geometry
+alone, which flags the same source with no training run
+(Sections~\ref{sec:screen-free} and \ref{sec:res-screen-free}).
+\item Four negative results, covering open-vocabulary detection, automatic
+relabelling, naive multi-source merging and synthetic augmentation, which
+constrain the design space for this task (Section~\ref{sec:negative}).
+\end{enumerate}
+
+\textbf{Relation to prior work by the same authors.} The single-source specialist
+evaluated here is the detector of \cite{katiyar2026mvml}, which addressed detection
+and condition assessment at one facility. That work could not test cross-facility
+transfer, which is the limitation this paper addresses. The corpus, the benchmark,
+both screening procedures and all evaluation reported here are new.
+
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Perception for battery disassembly}
+Zang \emph{et al.} \cite{zang2024robotic} surveyed robotic EV battery disassembly
+and concluded that the process remains predominantly manual, with perception and
+task uncertainty identified as the principal obstacles. Wegener \emph{et al.}
+\cite{wegener2015} demonstrated that pack designs vary sufficiently between
+manufacturers that fixed automation does not transfer, which is the practical
+reason perception must generalise. However, that study addressed mechanical
+disassembly sequencing and did not evaluate a perception component.
+
+Most published perception work for this application targets fasteners rather
+than components. Screw detection has been addressed with Faster R-CNN combined
+with rotation edge similarity \cite{screwrcnn2021}, with YOLOX-family detectors
+\cite{screwbatt2023}, and in a recent comparison of YOLOv11 against Faster R-CNN
+\cite{screwcompare2026}. However, each of these studies reports accuracy on
+imagery from a single collection and therefore cannot establish transfer.
+Module-level and busbar-level perception is comparatively under-explored. Tan
+\emph{et al.} \cite{tan2025screws} developed a collaborative robot that unfastens
+and collects screws by fusing vision with force and torque sensing, reporting
+above 90\% unfastening efficiency; however, the vision component operates on a
+single fixed pack geometry. The closest prior work applies instance segmentation
+with point-cloud registration to grasp busbars \cite{cvmodule2023}, but is
+restricted to one module type.
+
+A recurring theme is data scarcity. Every study named above collected and
+hand-annotated its own imagery, 1,719 images in the case of
+\cite{screwbatt2023}, and none released it. \cite{screwcompare2026} resorts to
+laptop screws as a proxy domain and states that the field is hampered by a lack
+of public datasets. That absence motivates the benchmark presented here.
+
+\subsection{Cross-dataset evaluation and label quality}
+Domain shift is a well-documented failure mode in visual recognition
+\cite{recht2019,koh2021wilds}: models that appear strong on their own test split
+degrade sharply on data collected under a different protocol. However, these
+benchmarks vary the imaging distribution while holding the annotation protocol
+fixed, whereas the corpus considered here varies both. Northcutt \emph{et al.}
+\cite{northcutt2021} demonstrated that pervasive label errors in established test
+sets destabilise benchmark rankings, but treated label error as noise about an
+agreed target rather than as systematic disagreement about what the target is.
+The distinction matters for merged corpora, and it is the distinction the
+proposed screening procedure operationalises. Penquitt \emph{et al.}
+\cite{penquitt2026} developed a modular framework combining automatic label-error
+detection with crowd-sourced verification, recovering 18\% missing or inaccurate
+labels in the KITTI pedestrian class. However, that framework corrects errors
+relative to a standard agreed within a single dataset, whereas the sources
+considered here disagree about what the class denotes, which no within-convention
+correction can reconcile. Abou Akar \emph{et al.} \cite{abouakar2026} studied
+multi-source training for industrial detection using real, rendered and
+generatively synthesised imagery. However, those sources share one annotation
+standard by construction, since synthetic data carries its ground truth.
+
+\subsection{Self-supervised representations for detection}
+Benchmark design for industrial vision has precedent: MVTec AD
+\cite{bergmann2019mvtec} established that a carefully constructed benchmark can
+redirect a sub-field, though it was collected by one group under controlled
+conditions and so exhibits no inter-source annotation disagreement. Zhou
+\emph{et al.} \cite{zhou2022dg} surveyed domain generalisation; however, that
+taxonomy presumes a fixed label space across domains, the assumption shown here to
+fail on assembled corpora. Self-supervised backbones such as DINOv2 \cite{dinov2}
+learn features that transfer without task-specific fine-tuning, and detection
+transformers \cite{carion2020detr} built on them \cite{rfdetr} are reported to generalise better than detectors trained from
+scratch in low-data regimes. However, that claim has been established on natural
+imagery with consistent annotation. Whether it holds on the cluttered, specular
+imagery of battery internals, and under annotation shift, is evaluated in
+Section~\ref{sec:res-arch}.
+
+To the best of our knowledge, no public cross-facility benchmark for EV battery
+component detection exists, and no prior study has quantified the contribution of
+annotation-convention divergence to cross-source detection accuracy. Therefore,
+this research presents both.
+
+\section{Corpus and Benchmark}
+\label{sec:data}
+
+\subsection{Sources}
+A corpus of 4,425 training images was assembled from 13 independent public
+sources spanning ten EV pack families, annotated with two classes,
+\texttt{module} and \texttt{busbar} (Table~\ref{tab:sources}). The images and the
+polygon annotations originate with those sources; the contribution made here is
+the assembly, the deduplication, the audit and the benchmark construction, not
+the annotation. Licences differ across sources and one is non-commercial, so
+per-source provenance is recorded and released so that any single source can be
+excluded by a downstream user.
+
+\begin{table}[t]
+\caption{Corpus sources (13 total, ten pack families)}
+\label{tab:sources}
+\centering\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrl}
+\toprule
+Source & Images & Pack family \\
+\midrule
+ev-battery-comp-det. & 1,045 & multi-manufacturer \\
+ev-battery-components & 680 & Audi / BMW / Chevrolet \\
+last\_exp4 & 483 & multi-manufacturer \\
+ev-battery-pack & 435 & single laboratory rig \\
+battery\_comp, ue\_d1 & 517 & Nissan Leaf, close-ups \\
+Others (eight sources) & 1,265 & mixed \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Deduplication and leakage control}
+Reported accuracy is informative only against a benchmark that does not overlap
+the training data. All 4,440 candidate images were therefore compared by
+difference hashing (dHash) at a Hamming distance threshold of 6, a value selected
+because it separates augmentation-derived near-duplicates from genuinely distinct
+frames on this corpus. Fifteen same-source near-duplicates were removed, and a
+cross-source pass at a looser threshold returned zero duplicates, which confirms
+that the sources are genuinely independent rather than republications of one
+another.
+
+This control proved necessary rather than precautionary. One candidate source, a
+712-image public collection covering 19 vehicle types, republishes imagery from
+another source already present in the corpus: 78 images were byte-identical
+duplicates of training images. Merging without verification would have placed
+training images directly into the benchmark.
+
+\subsection{Annotation audit}
+\label{sec:audit}
+All 4,425 training images were audited for label and image quality. Of these,
+23.5\% carry no labels, 12.3\% score low on a Laplacian-variance blur metric,
+20.4\% are greyscale, and none contain degenerate boxes.
+
+Two findings changed how the corpus was treated. Firstly, the blur and greyscale
+flags are largely false alarms. The lowest-scoring images are smooth, closed pack
+lids, for which a Laplacian-variance metric reads flat metal as blurred, and the
+greyscale images originate from two monochrome sources. Both add useful
+variation, so deletion on the metric alone would degrade the corpus. Secondly,
+the harmful category is unlabelled images that nonetheless contain visible
+components. A proportion of the 23.5\% is legitimate background, which suppresses
+false positives, but inspection confirmed open packs with clearly visible busbar
+assemblies carrying no annotations. Such frames teach the detector that busbars
+are background and are a plausible contributor to the weak busbar accuracy
+reported in Section~\ref{sec:res-arch}.
+
+The audit also established that 16,945 of the 19,522 annotations are polygon
+masks with between 5 and 151 vertices rather than boxes. These are converted to
+enclosing boxes for detection training and evaluation. It should be noted that an
+early version of the evaluation pipeline silently discarded every polygon-format
+label, trained on 20\% of the annotations, and produced an inflated score that
+appeared plausible. The failure is easy to introduce and difficult to detect, and
+ground-truth instance counts should be reconciled across pipelines as a matter of
+routine.
+
+\subsection{The cross-facility benchmark}
+A cross-facility benchmark of 225 images containing 780 instances was drawn from
+all sources and held out entirely from training. A convention-consistent subset
+of 177 images, obtained by applying the screening procedure of
+Section~\ref{sec:screen}, is reported alongside it throughout.
+
+\section{Method}
+
+\subsection{Detectors and training configurations}
+Three configurations are compared.
+
+\textbf{Single-source specialist.} YOLOv8n trained only on the single-laboratory
+source at 768\,px, following the conventional approach in this literature.
+
+\textbf{Multi-source YOLO11n.} YOLO11n \cite{yolo11}, 2.6\,M parameters, trained
+from COCO initialisation on all 13 sources for 150 epochs at 640\,px with
+stochastic gradient descent.
+
+\textbf{Multi-source RF-DETR.} RF-DETR-Nano \cite{rfdetr}, a real-time detection
+transformer with a frozen DINOv2 \cite{dinov2} backbone, fine-tuned on the same
+data for 60 epochs at 384\,px. The resolution and epoch budget are the
+architecture defaults; the consequence for comparability is stated in
+Section~\ref{sec:limits}.
+
+\subsection{Harmonised evaluation protocol}
+Confidence scores are not comparable across architectures, and mixing metric
+implementations produced a spurious result in early experiments conducted for
+this study. Every model is therefore scored with a single metric implementation
+at a common confidence threshold of 0.05, on identical images, against identical
+ground truth including polygon-derived boxes. The threshold of 0.05 was selected
+because it lies below the operating point of all three detectors and therefore
+does not truncate the precision-recall curve for any of them.
+
+\subsection{Convention-consistency screening}
+\label{sec:screen}
+The proposed screening procedure identifies sources whose annotation convention
+diverges from the corpus consensus, using a single merged-corpus training run.
+
+Let $\mathcal{S}=\{S_1,\dots,S_n\}$ denote the sources and let $a_i$ denote the
+class-specific mAP@50 obtained by the merged-corpus detector on the held-out
+images of $S_i$. A source is flagged as convention-divergent when its accuracy
+falls below a robust lower fence,
+\begin{equation}
+a_i < \operatorname{med}(\mathbf{a}) - k \cdot 1.4826 \cdot \operatorname{mad}(\mathbf{a}),
+\label{eq:screen}
+\end{equation}
+where $\mathbf{a}=(a_1,\dots,a_n)$, $\operatorname{med}$ denotes the median,
+$\operatorname{mad}$ denotes the median absolute deviation, the constant 1.4826
+rescales the median absolute deviation to a consistent estimator of the standard
+deviation under normality, and $k$ is a sensitivity parameter. A value of $k=3$
+is used throughout, which is the conventional choice for outlier rejection and
+which is shown in Section~\ref{sec:res-screen} to separate the divergent source
+from the consensus by a wide margin on this corpus.
+
+The median and the median absolute deviation are used in place of the mean and
+the standard deviation because a divergent source inflates both of the latter and
+thereby masks itself. The procedure requires no additional annotation, no
+additional training run beyond the merged-corpus model that is trained in any
+case, and no assumption about which source is divergent.
+
+A flagged source is not discarded from the corpus. It is reported separately as
+an out-of-convention benchmark, on the grounds established in
+Section~\ref{sec:res-screen} that its labels encode a different task rather than
+a degraded version of the same one.
+
+\subsection{Training-free screening from annotation geometry}
+\label{sec:screen-free}
+The procedure above requires a merged-corpus training run. A cheaper variant
+operates on the annotation files alone. A source annotating sub-components rather
+than pack-level modules produces many small boxes per image, whereas a source
+following the consensus convention produces few large ones. That signature is
+captured by a granularity index, defined as follows:
+\begin{equation}
+g_i = n_i / s_i ,
+\label{eq:granularity}
+\end{equation}
+where $n_i$ denotes the mean number of module instances per image in source $S_i$
+and $s_i$ denotes the median normalised module scale, taken as the square root of
+the enclosing-box area in normalised image coordinates. Scale enters as a square
+root so that the index is a count per unit length and is invariant to image
+resolution. Eq.~\ref{eq:screen} is applied to $\mathbf{g}$ with the inequality
+reversed, since divergence raises the index.
+
+\section{Results}
+
+\subsection{The single-source evaluation gap}
+\label{sec:res-gap}
+Table~\ref{tab:gap} quantifies the central problem. The
+specialist scores 0.818 mAP@50 on the single-source benchmark on which it was
+trained and validated, and 0.277 on the cross-facility benchmark, a relative loss
+of 66\%. Its in-domain accuracy therefore does not predict deployment behaviour.
+
+\begin{table}[t]
+\caption{Cross-facility generalisation gap, mAP@50}
+\label{tab:gap}
+\centering\small
+\begin{tabular}{lcc}
+\toprule
+Model & In-domain & Cross-facility \\
+\midrule
+Single-source specialist & \textbf{0.818} & 0.277 \\
+Multi-source YOLO11n & 0.195 & 0.410 \\
+Multi-source RF-DETR & 0.541 & \textbf{0.502} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The converse also holds and is worth stating: the multi-source models score lower
+in domain than the specialist. Training for breadth costs peak accuracy on any
+single pack type, and which trade is preferable depends on whether a line
+receives one pack type or many. However, the magnitude of the drop for YOLO11n
+(0.195) exceeds what breadth alone explains. It is not a training failure. The
+in-domain benchmark is itself the source whose annotation convention diverges
+from the remainder of the corpus, a confound examined in
+Section~\ref{sec:res-screen} and stated as a limitation in
+Section~\ref{sec:limits}.
+
+\subsection{Screening outcome and recovery}
+\label{sec:res-screen}
+Per-source module accuracy for the merged-corpus detector is 0.995 on
+\texttt{ue\_rav4}, 0.910 on \texttt{bmw\_i3}, 0.873 on the largest source,
+0.749 on \texttt{ev-battery-components}, and 0.043 on the single-laboratory
+source. Applying Eq.~\ref{eq:screen} with $k=3$ yields a lower fence of 0.330.
+Fig.~\ref{fig:screen} shows that exactly one source falls below it, and that the
+margin is wide: the flagged source scores 0.287 below the fence, while the
+nearest consensus source scores 0.419 above it. The screen is therefore not
+sensitive to the precise value of $k$ on this corpus; any $k$ between 1.5 and 4.5
+produces the identical partition.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_screen.pdf}
+\caption{Per-source module accuracy for the merged-corpus detector, with the
+robust lower fence of Eq.~\ref{eq:screen} at $k=3$. One source falls below the
+fence by a wide margin.}
+\label{fig:screen}
+\end{figure}
+
+Visual inspection of the flagged source confirms the diagnosis. It annotates
+small internal sub-components in extreme macro views as modules, whereas every
+other source annotates pack-level modules. The detector learned the majority
+convention and applied it consistently, so the collapse constitutes a
+disagreement about the target rather than a failure of perception.
+
+The consequence is quantified in Fig.~\ref{fig:perclass}: excluding the flagged
+source raises YOLO11n module mAP@50 from 0.547 to 0.774, a recovery of 0.227, with
+no additional data and no additional training. Aggregate accuracy over sources with
+inconsistent conventions is therefore not a meaningful quantity.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_perclass.pdf}
+\caption{Per-class accuracy on the full benchmark and on the screened subset.
+Screening recovers 0.227 module mAP@50 for YOLO11n and 0.091 for RF-DETR, and
+leaves busbar accuracy substantially unchanged.}
+\label{fig:perclass}
+\end{figure}
+
+\subsection{Agreement of the training-free screen}
+\label{sec:res-screen-free}
+Eq.~\ref{eq:granularity} was evaluated over all 4,760 label files, using no images
+and no trained model. The divergent source attains a granularity index of 40.7,
+against 15.0 for the next highest source and a corpus median of 9.00. The robust
+criterion at $k=3$ yields an upper fence of 29.02, and exactly one source exceeds
+it (Fig.~\ref{fig:convention}). It is the same source flagged by the model-based
+procedure. The two screens are methodologically independent, one measuring detector
+behaviour on held-out images and the other only annotation geometry, so their
+agreement is a second line of evidence that the source encodes a different
+convention rather than harder imagery. A corpus may therefore be screened before a
+detector is trained. It should be noted that the index detects divergence in
+annotation \emph{granularity} specifically; conventions disagreeing about class
+boundaries while preserving object scale would still require the model-based
+procedure.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_convention_ieee.pdf}
+\caption{Training-free convention screening. The granularity index of
+Eq.~\ref{eq:granularity} per source, with the robust fence at $k=3$. The flagged
+source is the one the model-based procedure flags, identified with no training run.}
+\label{fig:convention}
+\end{figure}
+
+\subsection{Positive control}
+\label{sec:res-control}
+Both screens were applied to a corpus in which the divergent source was identified
+after the fact, so neither has been tested against a case whose answer is known in
+advance. To supply one, a consensus source was relabelled to a deliberately
+different convention, every pack-level module box being replaced by a
+$3\times2$ grid of inset sub-component boxes covering the same region. No image is
+altered and no busbar annotation is touched, so a screen responding to the
+manipulation responds to annotation convention alone. The manipulated source
+carries a granularity index of 11.1 before manipulation, inside the consensus band,
+and 185.8 after. The training-free screen flags it, continues to flag the real
+divergent source, and leaves every genuine consensus source below the fence, so the
+procedure recovers a divergence whose ground truth is known by construction without
+false positives elsewhere. This control validates the training-free screen; an
+equivalent control for the model-based procedure requires retraining on the
+manipulated corpus and is reported as future work.
+
+\subsection{Architecture comparison under annotation shift}
+\label{sec:res-arch}
+Under the harmonised protocol, RF-DETR attains 0.502 mAP@50 against 0.410 for
+YOLO11n on the full benchmark, and leads on the stricter mAP@50--95 (0.312
+against 0.256), as reported in Table~\ref{tab:detectors}.
+
+\begin{table}[t]
+\caption{Detector comparison on the full cross-facility benchmark (225 images) and
+on the screened subset (177 images), mAP@50 unless stated}
+\label{tab:detectors}
+\centering\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llcccc}
+\toprule
+Model & Benchmark & @50 & @50--95 & module & busbar \\
+\midrule
+Specialist & full & 0.277 & -- & 0.231 & -- \\
+\addlinespace
+YOLO11n & full & 0.410 & 0.256 & 0.547 & 0.304 \\
+        & screened & 0.544 & -- & \textbf{0.774} & 0.344 \\
+\addlinespace
+RF-DETR & full & \textbf{0.502} & \textbf{0.312} & 0.680 & 0.353 \\
+        & screened & \textbf{0.558} & -- & 0.771 & \textbf{0.366} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Taken alone that comparison is misleading. Table~\ref{tab:detectors} also reports both models on the screened
+subset of 177 images, on which they are effectively tied: 0.558 against 0.544 overall, 0.771 against 0.774 on the module
+class, and 0.366 against 0.344 on the busbar class. The frozen self-supervised
+backbone therefore confers no advantage on conventionally annotated packs.
+
+
+
+The aggregate advantage arises entirely from behaviour under annotation shift.
+Reintroducing the flagged source reduces YOLO11n module accuracy from 0.774 to
+0.547, a loss of 0.227, but reduces RF-DETR module accuracy only from 0.771 to
+0.680, a loss of 0.091. The defensible claim is correspondingly narrow: a frozen
+self-supervised backbone does not detect ordinary modules more accurately, but it
+degrades considerably more gracefully when the definition of the target moves. On
+a line receiving heterogeneous packs, graceful degradation is the property of
+practical value.
+
+Busbar is the weaker class for every configuration, at 0.30 to 0.37. The cause is
+annotation coverage rather than model capability: only four of eight benchmark
+sources annotate busbars at all, and 61\% of busbar instances originate from a
+single source. This is the same coverage problem identified for the module class,
+expressed in a different form.
+
+\subsection{Deployment cost and zero-shot transfer}
+Evaluated on 17 pack families absent from the corpus, drawn from an unlabelled
+public collection, the merged-corpus detector attains a mean detection rate of 0.76
+and finds busbars in 16 of 17, with 1.00 on BMW i4 and Hyundai Ioniq against 0.27 on
+a Volvo truck pack, so module geometry transfers to unseen passenger-vehicle packs
+while unusual form factors remain the weak axis. Dynamic INT8 quantisation to ONNX reduced median CPU latency from 56.3\,ms to
+44.8\,ms and file size from 6.3\,MB to 3.4\,MB for a loss of 0.007 mAP@50, measured
+over 20 benchmark images on an Apple M1 processor, giving roughly 22 frames per
+second without a graphics processor.
+
+\subsection{Negative results}
+\label{sec:negative}
+Four failures constrain the design space and are reported because each was
+expected to succeed.
+
+Firstly, open-vocabulary detection is unusable for this task. YOLO-World,
+prompted with \texttt{ev battery module} and \texttt{busbar}, attained 0.004
+mAP@50 on the benchmark, battery internals being too far outside its training
+distribution.
+
+Secondly, naive multi-source merging reduced module mAP@50 to 0.094 and aggregate
+accuracy to 0.331 on the single-source test split, below the 0.818 single-source
+baseline. More data made the model worse. This result motivated the screening
+procedure of Section~\ref{sec:screen}.
+
+Thirdly, automatic relabelling of the flagged source was attempted with an
+open-vocabulary grounding model in order to reconcile it with the consensus
+convention. On greyscale macro imagery the proposals were unusable, recovering
+two of approximately five modules on clean frames and producing boxes covering
+half the frame on close-ups. Convention conflicts are therefore not cheaply
+repairable after collection, which argues for agreeing annotation guidelines
+before collection rather than after.
+
+Fourthly, copy-paste compositing combined with synthetic glare augmentation
+degraded the detector. Validation mAP@50 declined monotonically over the first
+six epochs, from 0.503 to 0.270, against a baseline of 0.818, and training was
+terminated. Both techniques are widely reported as beneficial elsewhere, and the
+likely cause here is label noise introduced at paste boundaries together with
+glare intensity that does not match the statistics of the real bright-condition
+imagery.
+
+\section{Limitations}
+\label{sec:limits}
+
+The 66\% relative loss of Section~\ref{sec:res-gap} is measured against an
+in-domain benchmark that is itself the convention-divergent source. It therefore
+conflates generalisation loss with the specialist having been trained on an
+idiosyncratic convention, and should be read as an upper bound on the
+generalisation component; a second in-domain reference source would separate the
+two. Each configuration was trained once, so the 0.092 mAP@50 margin between
+RF-DETR and YOLO11n carries no confidence interval, and the two differ in epoch
+budget, resolution and optimiser because architecture defaults were used. That
+comparison is accordingly one between two configurations as commonly deployed,
+not a controlled comparison of architectures.
+
+The benchmark inherits the annotation conventions of its sources, with no
+independently relabelled gold subset, so model error and label error cannot be
+separated on it; this is material for a study whose central claim concerns
+annotation quality. Both screens assume divergent sources are a minority, since
+the median defines the consensus, and the training-free index assumes divergence
+expressed as granularity. The corpus is assembled from public sources, so coverage
+is uneven and licences vary, one source at 24\% of training images being
+CC BY-NC-SA 4.0 with a propagating ShareAlike condition. Finally, busbar accuracy
+of 0.35 is not sufficient for autonomous operation, and these results characterise
+the failure modes of the task rather than deliver a deployable detector.
+
+\section{Conclusion}
+
+This paper presented a cross-facility benchmark for electric vehicle battery
+component detection. Single-source evaluation was shown to overstate deployment
+accuracy sufficiently to mislead, the same detector losing two thirds of its
+accuracy across pack sources. Annotation convention, rather than architecture,
+proved the dominant failure mode: the proposed screening procedure identified the
+divergent source from a single training run and recovered 0.227 module mAP@50, and
+a training-free variant flagged the same source with no training at all. A frozen
+self-supervised backbone supplies robustness to annotation shift rather than
+improved detection of ordinary modules.
+
+Taken together, these results indicate that dataset design, and specifically
+agreement on annotation convention before collection, is the first thing to get
+right in this application. Future work will construct an independently relabelled gold subset in order to
+separate model error from label error, and will extend the positive control to the
+model-based screen.
+
+\section*{Acknowledgements}
+The authors thank the RESCu-M2 research hub at the University of Birmingham, and
+Prof. Samia Nefti-Meziani for her leadership of it, for supporting this work and
+providing access to the EV battery disassembly facility.
+
+\begin{thebibliography}{00}
+
+\bibitem{ec_crm} European Commission, ``Study on the critical raw materials for
+the EU: Final report,'' Publ. Office Eur. Union, Brussels, 2023.
+
+\bibitem{harper2019} G. Harper \emph{et al.}, ``Recycling lithium-ion batteries
+from electric vehicles,'' \emph{Nature}, vol. 575, pp. 75--86, 2019.
+
+\bibitem{te2024} Transport \& Environment, ``From waste to value: the potential
+for battery recycling in Europe,'' Brussels, 2024.
+
+\bibitem{zang2024robotic} Y. Zang, M. Qu, D. T. Pham, R. Dixon, F. Goli,
+Y. Zhang, and Y. Wang, ``Robotic disassembly of electric vehicle batteries:
+Technologies and opportunities,'' \emph{Comput. Ind. Eng.}, vol. 198, 110727,
+2024.
+
+\bibitem{wegener2015} K. Wegener, S. Andrew, A. Raatz, K. Dr\"oder, and
+C. Herrmann, ``Disassembly of electric vehicle batteries using the example of the
+Audi Q5 hybrid system,'' \emph{Procedia CIRP}, vol. 23, pp. 155--160, 2014.
+
+\bibitem{tan2025screws} M. Tan, J. Huang, X. Jiang, Y. Fang, Q. Liu, and
+D. T. Pham, ``Robotic removal and collection of screws in collaborative
+disassembly of end-of-life electric vehicle batteries,'' \emph{Biomimetics},
+vol. 10, no. 8, 553, 2025.
+
+\bibitem{screwrcnn2021} X. Li, M. Li, Y. Wu, D. Zhou, T. Liu, F. Hao, J. Yue,
+and Q. Ma, ``Accurate screw detection method based on faster R-CNN and rotation
+edge similarity for automatic screw disassembly,'' \emph{Int. J. Comput. Integr.
+Manuf.}, vol. 34, no. 11, pp. 1177--1195, 2021.
+
+\bibitem{screwbatt2023} H. Li, H. Zhang, Y. Zhang, S. Zhang, Y. Peng, Z. Wang,
+H. Song, and M. Chen, ``An accurate activate screw detection method for automatic
+electric vehicle battery disassembly,'' \emph{Batteries}, vol. 9, no. 3, 187, 2023.
+
+\bibitem{screwcompare2026} A. Naseri, S. Khwajazada, and S. Yang, ``Comparative
+analysis of YOLO and faster R-CNN models for EV battery screw detection,''
+\emph{Int. J. Adv. Manuf. Technol.}, vol. 144, no. 1--2, pp. 1107--1119, 2026.
+
+\bibitem{cvmodule2023} E. Gerlitz, L.-E. Enslin, and J. Fleischer, ``Computer
+vision application for industrial Li-ion battery module disassembly,''
+\emph{Prod. Eng.}, vol. 18, no. 3--4, pp. 393--401, 2023.
+
+\bibitem{recht2019} B. Recht, R. Roelofs, L. Schmidt, and V. Shankar, ``Do
+ImageNet classifiers generalize to ImageNet?,'' in \emph{Proc. ICML}, 2019,
+pp. 5389--5400.
+
+\bibitem{koh2021wilds} P. W. Koh \emph{et al.}, ``WILDS: A benchmark of
+in-the-wild distribution shifts,'' in \emph{Proc. ICML}, 2021, pp. 5637--5664.
+
+\bibitem{northcutt2021} C. G. Northcutt, A. Athalye, and J. Mueller, ``Pervasive
+label errors in test sets destabilize machine learning benchmarks,'' in
+\emph{Proc. NeurIPS Datasets and Benchmarks}, 2021.
+
+\bibitem{katiyar2026mvml} S. A. Katiyar, P. Venigalla, K. Kosimov, and
+S. Nefti-Meziani, ``Vision model for detection and condition assessment of EV
+battery components for circular manufacturing,'' in \emph{Proc. 12th World Congr.
+Elect. Eng. Comput. Syst. Sci. (EECSS)}, London, UK, 2026, Paper MVML 125.
+
+\bibitem{bergmann2019mvtec} P. Bergmann, M. Fauser, D. Sattlegger, and C. Steger,
+``MVTec AD: A comprehensive real-world dataset for unsupervised anomaly
+detection,'' in \emph{Proc. IEEE/CVF CVPR}, 2019, pp. 9592--9600.
+
+\bibitem{carion2020detr} N. Carion, F. Massa, G. Synnaeve, N. Usunier,
+A. Kirillov, and S. Zagoruyko, ``End-to-end object detection with transformers,''
+in \emph{Proc. ECCV}, 2020, pp. 213--229.
+
+\bibitem{zhou2022dg} K. Zhou, Z. Liu, Y. Qiao, T. Xiang, and C. C. Loy, ``Domain
+generalization: A survey,'' \emph{IEEE Trans. Pattern Anal. Mach. Intell.},
+vol. 45, no. 4, pp. 4396--4415, 2023.
+
+\bibitem{penquitt2026} S. Penquitt, J. Klees, R. Cakaj, D. Kondermann,
+M. Rottmann, and L. Schmarje, ``From label error detection to correction: A modular
+framework and benchmark for object detection datasets,'' in \emph{Proc. 21st Int.
+Conf. Comput. Vis. Theory Appl. (VISAPP)}, 2026.
+
+\bibitem{abouakar2026} C. Abou Akar, H. Koubeissy, J. Khalil, J. Tekli,
+M. Kamradt, and A. Makhoul, ``Rendered vs AI-generated vs real data: Training
+industrial object detection models with multi-source data,'' in \emph{Proc. 21st
+Int. Conf. Comput. Vis. Theory Appl. (VISAPP)}, 2026, pp. 276--287.
+
+\bibitem{dinov2} M. Oquab \emph{et al.}, ``DINOv2: Learning robust visual
+features without supervision,'' \emph{Trans. Mach. Learn. Res.}, 2024.
+
+\bibitem{rfdetr} Roboflow, ``RF-DETR: A real-time detection transformer,'' 2025.
+
+\bibitem{yolo11} G. Jocher and J. Qiu, ``Ultralytics YOLO11,'' 2024.
+
+\end{thebibliography}
+
+\end{document}

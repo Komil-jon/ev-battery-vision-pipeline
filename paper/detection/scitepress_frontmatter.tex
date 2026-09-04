@@ -1,0 +1,50 @@
+\begin{document}
+
+\onecolumn
+\begin{center}
+{\LARGE\bfseries Annotation Convention, Not Architecture, Limits\\
+Cross-Facility Detection of Electric Vehicle Battery Components\par}
+\vspace{10pt}
+\authorname{Komiljon Kosimov and Shiv Ashutosh Katiyar}
+\affiliation{Department of Mechanical Engineering, University of Birmingham,
+Birmingham B15 2TT, United Kingdom}
+\email{kxk445@student.bham.ac.uk, s.a.katiyar@bham.ac.uk}
+\end{center}
+\vspace{8pt}
+
+\keywords{Object Detection, Dataset Quality, Annotation Consistency, Domain
+Generalisation, Cross-Dataset Evaluation, Electric Vehicle Batteries, Circular
+Economy.}
+
+\abstract{Automated disassembly of end-of-life electric vehicle (EV) battery
+packs depends on a detector that locates modules and busbars reliably across the
+pack types a recycling line actually receives. Published detectors for this task
+are trained and validated on imagery from a single facility, and the accuracy
+they report is shown here to be a poor predictor of behaviour elsewhere. A
+cross-facility benchmark of 225 images and 780 instances, assembled from 13
+independent public sources spanning ten EV pack families and verified free of
+train-test leakage by perceptual hashing, is presented. On this benchmark a
+single-source specialist falls from 0.818 to 0.277 mAP@50, a relative loss of
+66\%. Disaggregating accuracy by source reveals that the loss is not distributed
+evenly: per-source module accuracy spans 0.995 to 0.043, and the collapse occurs
+on exactly one source whose annotation convention differs from the consensus.
+This observation is developed into a screening procedure that identifies
+convention-divergent sources from a single merged-corpus training run using a
+robust outlier criterion on per-source accuracy. Applying the proposed procedure
+and excluding the one flagged source raises module mAP@50 from 0.547 to 0.774
+without additional data or training budget. Two architectures are compared under
+an identical evaluation protocol. A detection transformer built on a frozen
+self-supervised backbone confers no advantage on convention-consistent sources,
+at 0.771 against 0.774, but degrades far more gracefully when the annotation
+convention shifts, at 0.680 against 0.547, which isolates robustness to
+annotation shift rather than detection accuracy as the property such backbones
+supply. A training-free variant of the screen, computed
+from annotation geometry alone over 4,760 label files, flags the same source with
+no training run, giving a second and methodologically independent confirmation, and
+passes a positive control in which a consensus source relabelled to a sub-component
+convention is flagged while every genuine consensus source is not.
+Four negative results are reported that constrain the design space. The benchmark,
+the per-source provenance record and the evaluation code are released.}
+
+\vspace{10pt}
+\twocolumn
