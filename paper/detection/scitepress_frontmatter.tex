@@ -13,31 +13,21 @@ Birmingham B15 2TT, United Kingdom}
 Generalisation, Cross-Dataset Evaluation, Electric Vehicle Batteries, Circular
 Economy.}
 
-\abstract{Automated disassembly of end-of-life electric vehicle (EV) battery packs
-depends on a detector that locates modules and busbars reliably across the pack types
-a recycling line actually receives. Published detectors for this task are trained and
-validated on imagery from a single facility, and the accuracy they report is shown
-here to be a poor predictor of behaviour elsewhere. A cross-facility corpus is
-assembled from 13 independent public sources spanning ten EV pack families and
-verified free of train-test leakage by perceptual hashing. Disaggregating accuracy by
-source reveals that error is concentrated rather than spread: per-source module
-accuracy spans 0.097 to 1.000, and the collapse occurs where a source disagrees about
-what the target class denotes rather than where the imagery is difficult. This
-observation is developed into a screening procedure that identifies
-convention-divergent sources from a single training run using a robust outlier
-criterion, and into a training-free variant computed from annotation geometry alone
-over 4,760 label files. Both pass a positive control in which a consensus source
-relabelled to a sub-component convention is recovered while no other source changes
-status. Two further results concern method rather than data. Under a matched 60-epoch
-budget, self-supervised pretraining is marginally worse on conventionally annotated
-packs, at 0.955 against 0.979, and better by a factor of 3.5 under annotation shift,
-at 0.337 against 0.097, which isolates graceful degradation rather than accuracy as
-the property it supplies. And validation data drawn from a single divergent source is
-shown to \emph{invert} checkpoint selection rather than merely bias it: the selected
-checkpoint is worse than the fixed-budget final checkpoint by 51\% relative, with
-non-overlapping bootstrap intervals and an effect roughly 80 times the seed-to-seed spread,
-in both architectures tested. Five negative results are reported that constrain the
-design space. The corpus definition, the per-source provenance record and the
-evaluation code are released.}
+\abstract{Automated disassembly of end-of-life electric vehicle battery packs depends
+on a detector that locates modules and busbars across the pack types a recycling line
+actually receives. Published detectors are trained and validated at a single facility. This paper assembles a cross-facility corpus from 13 independent
+public sources spanning ten pack families and disaggregates accuracy by source. Error
+proves concentrated rather than spread: per-source module accuracy spans 1.000 to
+0.097, and the collapse occurs where a source disagrees about what the target class
+denotes rather than where the imagery is difficult. A screening procedure is proposed
+that identifies such sources from a single training run using a robust outlier
+criterion, together with a training-free variant computed from annotation geometry
+alone. Both pass a positive control in which a consensus source relabelled to a
+sub-component convention is recovered while no other source changes status. Two further
+results concern method. Under a matched training budget,
+self-supervised pretraining is marginally worse on conventionally annotated packs and
+better by a factor of 3.5 under annotation shift. And validation data drawn from a
+single divergent source inverts checkpoint selection, costing 51\% relative accuracy
+in both architectures tested. The corpus and evaluation code are released.}
 
 \onecolumn \maketitle \normalsize \setcounter{footnote}{0} \vfill
