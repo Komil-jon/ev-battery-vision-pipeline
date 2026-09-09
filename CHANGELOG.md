@@ -713,7 +713,7 @@ and the measured result where relevant. Maintained across work sessions.
 ## 2026-07-14
 
 ### Repository cleanup + public release
-- Removed the tracked raw dataset (`EV-Battery-pack--1/`, `data/`) and the
-  the local editor configuration; kept trained weights, scripts, and README.
+- Removed the tracked raw dataset (`EV-Battery-pack--1/`, `data/`) and the local
+  editor configuration; kept trained weights, scripts, and README.
 - Repo reduced from 4,786 tracked files to 69; pushed to GitHub and renamed to
   **ev-battery-vision-pipeline** for public discoverability.
