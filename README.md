@@ -21,22 +21,24 @@ DOI: [10.11159/mvml26.125](https://doi.org/10.11159/mvml26.125)
 > The single-facility two-stage pipeline. Most of this repository's Stage 1 / Stage 2
 > code and the "Key results" table below correspond to this paper.
 
-**[2] From Images to Robot Coordinates: Dataset Design, Detector Selection and
-Monocular 3D Localisation for Automated EV Battery Disassembly** — *under review*
-Y. Wang, K. Kosimov, S. A. Katiyar, Q. Nguyen. Source: [`paper/`](paper/)
+**[2] Annotation Convention, Not Architecture, Limits Cross-Facility Detection of
+Electric Vehicle Battery Components** — *in preparation*
+S. A. Katiyar, K. Kosimov. Source: [`paper/detection/`](paper/detection/)
 
-> Extends [1] to cross-facility evaluation, compares detector architectures on a
-> 13-source dataset, and adds metric 3D localisation validated on a UR5e.
-> Localisation code: [D405-ArUco-UR5e-Validation](https://github.com/xcdgdj/D405-ArUco-UR5e-Validation)
+> Extends [1] to cross-facility evaluation across 13 public sources. Introduces a
+> convention-consistency screening procedure with a positive control, a training-free
+> variant computed from annotation geometry alone, and a matched-budget comparison of
+> YOLO11n against RF-DETR.
 
 Headline results from [2]:
 
 | Finding | Result |
 |---|---|
-| Cross-facility generalisation gap | 0.818 → **0.277** mAP@50 (66% loss) |
-| Best cross-facility detector | RF-DETR **0.502** vs YOLO11n 0.410 mAP@50 |
-| Annotation convention spread | 0.995 → **0.043** per-source module mAP@50 |
-| Localisation (UR5e, RGB only) | **2.245 mm** height MAE, **9/9** target reaches |
+| Per-source module accuracy spread | **1.000 → 0.097** mAP@50, a convention disagreement |
+| Screening procedure | flags the divergent source; positive control passes |
+| Training-free screen | granularity index **40.7** vs fence 29.02, no training run |
+| Matched-budget architectures | RF-DETR **0.337** vs YOLO11n 0.097 under annotation shift |
+| Checkpoint selection | single-source validation **inverts** it, costing 51% relative |
 
 Released annotations: **16,945 polygon masks** in [`data/labels_release/`](data/labels_release/).
 

@@ -73,14 +73,7 @@ relabelling, naive multi-source merging, synthetic augmentation and prolonged
 fine-tuning of a pretrained model, each of which constrains the design space.
 \end{enumerate}
 
-\noindent\textbf{Relation to prior work by the same authors.} The single-source
-specialist evaluated in this paper is the detector reported in
-\cite{katiyar2026mvml}, which addressed detection and condition assessment at a
-single facility using a CPU-deployable two-stage pipeline. That work could not test
-cross-facility transfer, which is precisely the limitation the present paper
-addresses. The corpus, the benchmark, both screening procedures and all evaluation
-reported here are new, and the condition-assessment stage of the earlier work is
-deliberately not revisited.
+\noindent\textbf{Relation to prior work.} The single-source specialist evaluated in this paper is the detector of \cite{katiyar2026mvml}, which addressed detection and condition assessment at a single facility using a CPU-deployable two-stage pipeline. That work could not test cross-facility transfer, which is precisely the limitation the present paper addresses. The corpus, the benchmark, both screening procedures and all evaluation reported here are new, and the condition-assessment stage of the earlier work is deliberately not revisited.
 
 \section{\uppercase{Related Work}}
 \label{sec:related}
@@ -218,22 +211,23 @@ released so that any single source can be excluded by a downstream user.
 \caption{Principal corpus sources. Thirteen sources in total, spanning ten EV
 pack families.}
 \label{tab:sources}
-\centering
+\centering\scriptsize
+\setlength{\tabcolsep}{3.5pt}
 \begin{tabular}{lrl}
 \hline
 Source & Images & Pack family \\
 \hline
-ev-battery-comp-det. & 1,045 & multi-manufacturer \\
-ev-battery-components & 680 & Audi / BMW / Chevrolet \\
-last\_exp4 & 483 & multi-manufacturer \\
-ev-battery-pack & 435 & single laboratory rig \\
+ev-battery-comp-det. & 1,045 & multi-manuf. \\
+ev-battery-components & 680 & Audi/BMW/Chevy \\
+last\_exp4 & 483 & multi-manuf. \\
+ev-battery-pack & 435 & single lab rig \\
 battery\_comp & 280 & Nissan Leaf \\
 ue\_d1\_defect & 237 & module close-ups \\
-final\_mobilenet & 216 & multi-manufacturer \\
-automated-disassembly & 117 & disassembly cell \\
+final\_mobilenet & 216 & multi-manuf. \\
+automated-disassem. & 117 & disassembly cell \\
 bmw\_i3 & 111 & BMW i3 \\
 ue\_rav4 & 96 & Toyota RAV4 \\
-Others (three sources) & 725 & mixed \\
+Others (3 sources) & 725 & mixed \\
 \hline
 \end{tabular}
 \end{table}
@@ -270,7 +264,8 @@ greyscale, and no image contains a degenerate box.
 \begin{table}[t]
 \caption{Annotation and image-quality audit of the 4,425-image training corpus.}
 \label{tab:audit}
-\centering
+\centering\footnotesize
+\setlength{\tabcolsep}{3.5pt}
 \begin{tabular}{lrl}
 \hline
 Flag & Share & Assessment \\
@@ -450,7 +445,8 @@ Its in-domain accuracy therefore does not predict behaviour elsewhere.
 \caption{Single-source against cross-facility accuracy for the specialist detector,
 mAP@50.}
 \label{tab:gap}
-\centering
+\centering\footnotesize
+\setlength{\tabcolsep}{3.5pt}
 \begin{tabular}{lcc}
 \hline
 Model & In-domain & Cross-facility \\
@@ -551,12 +547,13 @@ producing false positives elsewhere.
 convention and the detector is retrained. Values are module mAP@50 for the
 model-based screen and the granularity index for the training-free screen.}
 \label{tab:control}
-\centering
+\centering\footnotesize
+\setlength{\tabcolsep}{3.5pt}
 \begin{tabular}{lccc}
 \hline
 Source & Original & Manipulated & Change \\
 \hline
-\multicolumn{4}{l}{\emph{model-based screen, fence 0.864 / 0.815}} \\
+\multicolumn{4}{l}{\emph{model-based, fence 0.864 / 0.815}} \\
 battery\_comp & 1.000 & 1.000 & $0.000$ \\
 edfw3 & 0.982 & 0.973 & $-0.009$ \\
 bmw\_i3 & 0.967 & 0.950 & $-0.017$ \\
@@ -564,7 +561,7 @@ bmw\_i3 & 0.967 & 0.950 & $-0.017$ \\
 automated & 0.641 & 0.591 & $-0.050$ \\
 divergent & 0.097 & 0.097 & $0.000$ \\
 \hline
-\multicolumn{4}{l}{\emph{training-free screen, fence 29.02 / 35.24}} \\
+\multicolumn{4}{l}{\emph{training-free, fence 29.02 / 35.24}} \\
 \textbf{manipulated} & \textbf{11.1} & \textbf{185.8} & $\mathbf{+174.7}$ \\
 \hline
 \end{tabular}
@@ -580,10 +577,11 @@ source under the identical protocol. Table~\ref{tab:arch} presents the compariso
 \caption{Architecture comparison under a matched 60-epoch budget, module mAP@50.
 Consensus is the mean over the six sources above the fence.}
 \label{tab:arch}
-\centering
+\centering\footnotesize
+\setlength{\tabcolsep}{3.5pt}
 \begin{tabular}{lccc}
 \hline
-Model & Consensus & Mild outlier & Divergent \\
+Model & Consensus & Mild out. & Diverg. \\
 \hline
 YOLO11n & \textbf{0.979} & 0.641 & 0.097 \\
 RF-DETR & 0.955 & \textbf{0.779} & \textbf{0.337} \\
@@ -626,13 +624,14 @@ times the seed-to-seed spread. On the module class, 500 bootstrap resamples give
 \begin{table}[t]
 \caption{Effect of selecting a checkpoint against single-source validation data, mAP@50.}
 \label{tab:inversion}
-\centering
+\centering\footnotesize
+\setlength{\tabcolsep}{3.5pt}
 \begin{tabular}{lcc}
 \hline
-Checkpoint & All sources & Module, 95\% CI \\
+Checkpoint & All src. & Module (95\% CI) \\
 \hline
-Val-selected & $0.461 \pm 0.018$ & 0.552 [0.471, 0.626] \\
-Fixed-budget final & $\mathbf{0.696 \pm 0.003}$ & \textbf{0.735 [0.659, 0.808]} \\
+Val-selected & $0.461 \pm 0.018$ & 0.552\,[0.471,\,0.626] \\
+Fixed-budget & $\mathbf{0.696 \pm 0.003}$ & \textbf{0.735\,[0.659,\,0.808]} \\
 \hline
 \end{tabular}
 \end{table}
