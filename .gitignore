@@ -73,3 +73,10 @@ paper/detection/article.cls
 paper/detection/SCITEPRESS.eps
 paper/detection/orcid.png
 paper/detection/orcid.eps
+
+# Compiled manuscripts: VISAPP prohibits public posting of papers under review.
+# Sources are tracked; built PDFs stay local until the decision is announced.
+paper/detection/*.pdf
+paper/*.pdf
+!paper/detection/figures/*.pdf
+!paper/figures/*.pdf
