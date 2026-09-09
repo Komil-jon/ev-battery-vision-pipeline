@@ -89,7 +89,7 @@ and evaluates detectors on it under a single harmonised protocol.
 
 The principal finding is that the dominant failure mode is not image difficulty
 and not model capacity. It is disagreement between sources about what the target
-class denotes. Per-source module accuracy spans 0.995 to 0.043, and inspection
+class denotes. Per-source module accuracy spans 1.000 to 0.097, and inspection
 confirms that the collapsing source annotates small internal sub-components as
 modules while every other source annotates pack-level modules. The detector
 learned the majority convention and applied it consistently; the collapse is a
@@ -272,11 +272,13 @@ appeared plausible. The failure is easy to introduce and difficult to detect, an
 ground-truth instance counts should be reconciled across pipelines as a matter of
 routine.
 
-\subsection{The cross-facility benchmark}
-A cross-facility benchmark of 225 images containing 780 instances was drawn from
-all sources and held out entirely from training. A convention-consistent subset
-of 177 images, obtained by applying the screening procedure of
-Section~\ref{sec:screen}, is reported alongside it throughout.
+\subsection{Evaluation sets}
+Two evaluation sets are used and kept distinct. A cross-facility benchmark of 225
+images containing 780 instances was drawn from all sources and held out entirely from
+training; it supports the single-source comparison of Section~\ref{sec:res-gap} and
+nothing else. The screening procedures and every result depending on them operate on a
+stratified sample of 1,628 images spanning 11 sources drawn from the corpus itself,
+for the reason given in Section~\ref{sec:screen}.
 
 \section{Method}
 
@@ -430,7 +432,7 @@ detector was retrained on the manipulated corpus under the identical budget.
 
 Table~\ref{tab:control} presents the outcome. The manipulated source falls from 0.941
 to 0.667 and crosses the fence, while no unmanipulated source moves by more than
-0.050 and four move by 0.017 or less. The flagged set gains exactly one member and
+0.050 and all but one move by 0.017 or less. The flagged set gains exactly one member and
 loses none. On the training-free index the same source rises from 11.1 to 185.8. Both
 screens therefore recover a divergence whose ground truth is known by construction,
 without false positives elsewhere.
@@ -498,7 +500,7 @@ for the divergent convention.
 Evaluated across all sources, the selected checkpoint is \emph{worse} than the final
 checkpoint by 0.235 mAP@50, a relative loss of 51\%. Across three seeds the final
 checkpoint attains $0.696 \pm 0.003$ and the selected checkpoint $0.461 \pm 0.018$,
-so the effect is 80 times the seed spread. On the module class, 500 bootstrap
+so the effect is roughly 80 times the seed spread. On the module class, 500 bootstrap
 resamples give non-overlapping 95\% intervals of $[0.659, 0.808]$ and
 $[0.471, 0.626]$ (Fig.~\ref{fig:inversion}). The same inversion appears in the
 pretrained model, whose validation identified epoch 3 as best and epoch 60 as

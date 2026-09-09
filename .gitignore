@@ -65,3 +65,12 @@ paper/*.out
 paper/*.xdv
 paper/*.bbl
 paper/*.blg
+
+# SCITEPRESS publisher style files (redistributed from scitepress.org, not ours)
+paper/detection/SCITEPRESS.sty
+paper/detection/apalike.sty
+paper/detection/apalike.bst
+paper/detection/article.cls
+paper/detection/SCITEPRESS.eps
+paper/detection/orcid.png
+paper/detection/orcid.eps

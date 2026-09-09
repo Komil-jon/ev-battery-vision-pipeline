@@ -5,15 +5,15 @@
 the battery packs they carry are simultaneously a hazard and a source of critical
 raw materials. Lithium, cobalt and nickel are all classified by the European
 Commission as critical raw materials with elevated supply risk
-\citep{eccrm,harper2019}, and European recycling capacity demand is projected to
-reach 170\,GWh by 2035 \citep{te2024}. Regulation (EU) 2023/1542 additionally
+\cite{eccrm,harper2019}, and European recycling capacity demand is projected to
+reach 170\,GWh by 2035 \cite{te2024}. Regulation (EU) 2023/1542 additionally
 requires documented condition data across the battery lifecycle
-\citep{eubattreg}, which manual inspection delivers inconsistently.
+\cite{eubattreg}, which manual inspection delivers inconsistently.
 
 Disassembly of EoL packs nevertheless remains predominantly manual. The
 operation is labour intensive, slow, and exposes workers to high voltage and to
 the risk of thermal runaway. A substantial research effort is consequently
-directed at automating it \citep{zang2024robotic,tan2025screws}.
+directed at automating it \cite{zang2024robotic,tan2025screws}.
 
 Every such system begins with perception. Before a manipulator can unfasten,
 grasp or lift a component, the battery modules and the busbars that connect them
@@ -36,10 +36,10 @@ harmonised protocol.
 
 The principal finding is that the dominant failure mode in this setting is
 neither image difficulty nor model capacity. It is disagreement between sources
-about what the target class denotes. Per-source module accuracy across the
-benchmark spans 0.995 to 0.043, and inspection confirms that the source on which
-accuracy collapses annotates small internal sub-components as modules while every
-other source annotates pack-level modules. The detector learned the majority
+about what the target class denotes. Per-source module accuracy spans
+1.000 to 0.097, and inspection confirms that the source on which accuracy collapses
+annotates small internal sub-components as modules while every other source annotates
+pack-level modules. The detector learned the majority
 convention and applied it consistently, so the collapse constitutes a
 disagreement about the target rather than a failure of perception.
 
@@ -75,7 +75,7 @@ fine-tuning of a pretrained model, each of which constrains the design space.
 
 \noindent\textbf{Relation to prior work by the same authors.} The single-source
 specialist evaluated in this paper is the detector reported in
-\citep{katiyar2026mvml}, which addressed detection and condition assessment at a
+\cite{katiyar2026mvml}, which addressed detection and condition assessment at a
 single facility using a CPU-deployable two-stage pipeline. That work could not test
 cross-facility transfer, which is precisely the limitation the present paper
 addresses. The corpus, the benchmark, both screening procedures and all evaluation
@@ -87,32 +87,32 @@ deliberately not revisited.
 
 \subsection{Perception for Battery Disassembly}
 
-\noindent \citet{zang2024robotic} surveyed robotic EV battery
+\noindent Zang et al. surveyed robotic EV battery
 disassembly and concluded that the process remains predominantly manual, with
-perception and task uncertainty identified as the principal obstacles. \citet{wegener2015} demonstrated that pack designs vary sufficiently
+perception and task uncertainty identified as the principal obstacles \cite{zang2024robotic}. Wegener et al. demonstrated that pack designs vary sufficiently
 between manufacturers that fixed automation does not transfer, which is the
-practical reason perception must generalise. However, that study addressed
+practical reason perception must generalise \cite{wegener2015}. However, that study addressed
 mechanical disassembly sequencing and did not evaluate a perception component.
 
 Most published perception work for this application targets fasteners rather than
-components. \citet{screwrcnn2021} proposed a screw detection method
+components. Li et al. proposed a screw detection method
 combining Faster R-CNN with rotation edge similarity, reporting improved
-localisation of the screw axis. However, the method was validated on a single
-collection of laboratory imagery. \citet{screwbatt2023} developed a
+localisation of the screw axis \cite{screwrcnn2021}. However, the method was validated on a single
+collection of laboratory imagery. Li et al. developed a
 YOLOX-family detector for active screw detection in EV battery disassembly using
-1,719 hand-annotated images. However, the dataset was not released and accuracy
-was reported only in domain. \citet{screwcompare2026}
+1,719 hand-annotated images \cite{screwbatt2023}. However, the dataset was not released and accuracy
+was reported only in domain. Naseri et al.
 presented a comparison of YOLOv11 against Faster R-CNN for the same task, and
 observed that the field is hampered by a lack of public datasets; the study
 resorts to laptop screws as a proxy domain, which limits the conclusions that
-transfer to battery imagery.
+transfer to battery imagery \cite{screwcompare2026}.
 
-Module-level and busbar-level perception is comparatively under-explored. \citet{tan2025screws} developed a collaborative robot that unfastens and
+Module-level and busbar-level perception is comparatively under-explored. Tan et al. developed a collaborative robot that unfastens and
 collects screws by fusing vision with force and torque sensing, reporting above
-90\% unfastening efficiency. However, the vision component operates on a single
+90\% unfastening efficiency \cite{tan2025screws}. However, the vision component operates on a single
 fixed pack geometry, so the reported figure does not characterise transfer.
-\citet{cvmodule2023} applied instance segmentation with point-cloud
-registration in order to grasp busbars on an industrial module. However, the
+Gerlitz et al. applied instance segmentation with point-cloud
+registration in order to grasp busbars on an industrial module \cite{cvmodule2023}. However, the
 approach is restricted to one module type and requires a reference model of that
 type.
 
@@ -123,29 +123,29 @@ benchmark presented in this paper.
 \subsection{Cross-Dataset Evaluation}
 
 \noindent Domain shift is a well-documented failure mode in visual recognition.
-\citet{recht2019} demonstrated that classifiers which appear strong
+Recht et al. demonstrated that classifiers which appear strong
 on the original ImageNet test split lose accuracy on a replication set collected
-by the same protocol. However, that study varied the sampling procedure while
-holding the label taxonomy fixed. \citet{koh2021wilds} assembled the
+by the same protocol \cite{recht2019}. However, that study varied the sampling procedure while
+holding the label taxonomy fixed. Koh et al. assembled the
 WILDS benchmark of in-the-wild distribution shifts across ten application
 domains, and established that standard training degrades substantially under
-such shift. However, WILDS likewise holds the annotation protocol constant within
+such shift \cite{koh2021wilds}. However, WILDS likewise holds the annotation protocol constant within
 each dataset, whereas the corpus considered in this paper varies both the imaging
 distribution and the annotation protocol between sources.
 
-\citet{northcutt2021} demonstrated that pervasive label errors in
+Northcutt et al. demonstrated that pervasive label errors in
 established test sets destabilise benchmark rankings, and estimated an average
-label error rate of 3.4\% across ten widely used datasets. However, that work
+label error rate of 3.4\% across ten widely used datasets \cite{northcutt2021}. However, that work
 treats label error as noise about an agreed target, whereas the failure
 characterised here is systematic disagreement about what the target is. The
 distinction is consequential for merged corpora: noise averages out with scale
 whereas a divergent convention does not, and the proposed screening procedure
 operationalises exactly that distinction.
 
-\citet{penquitt2026} developed Rechecked, a modular framework combining automatic
+Penquitt et al. developed Rechecked, a modular framework combining automatic
 label-error detection with crowd-sourced verification, and applied it to the
 pedestrian class of KITTI, in which 18\% of the original ground-truth labels were
-found to be missing or inaccurate. However, the framework corrects errors relative
+found to be missing or inaccurate \cite{penquitt2026}. However, the framework corrects errors relative
 to an annotation standard that is agreed within a single dataset, and the authors
 report that the best available detection methods still miss up to 66\% of label
 errors. The failure characterised in the present work is of a different kind: the
@@ -154,10 +154,10 @@ denotes, and consequently no correction procedure operating within a single
 convention can reconcile them. Section~\ref{sec:negative} reports an attempt at
 exactly such a reconciliation, and its failure.
 
-\citet{abouakar2026} investigated multi-source training for industrial object
+Abou Akar et al. investigated multi-source training for industrial object
 detection, combining real imagery with rendered and generatively synthesised data,
 and demonstrated that the composition of the training mixture materially affects
-generalisation. However, the sources compared in that study share a single
+generalisation \cite{abouakar2026}. However, the sources compared in that study share a single
 annotation standard by construction, because the synthetic data is generated with
 ground truth attached. The corpus considered here is multi-source in a stricter
 sense, in that each contributing source carries an independently authored
@@ -165,9 +165,9 @@ annotation standard.
 
 \subsection{Self-Supervised Representations for Detection}
 
-\noindent Self-supervised backbones such as DINOv2 \citep{dinov2} learn features
+\noindent Self-supervised backbones such as DINOv2 \cite{dinov2} learn features
 that transfer without task-specific fine-tuning, and detection transformers
-\citep{carion2020detr} initialised from them \citep{rfdetr} are reported to generalise better than
+\cite{carion2020detr} initialised from them \cite{rfdetr} are reported to generalise better than
 detectors trained from scratch in low-data regimes. However, that claim has been
 established principally on natural imagery with a consistent annotation
 protocol. Whether it holds on the cluttered, specular imagery of battery
@@ -176,20 +176,20 @@ in Section~\ref{sec:res-arch}.
 
 \subsection{Open-Vocabulary Detection and Automatic Annotation}
 
-\noindent Open-vocabulary detectors such as YOLO-World \citep{yoloworld} and
-Grounding DINO \citep{groundingdino} localise objects specified by free-text
+\noindent Open-vocabulary detectors such as YOLO-World \cite{yoloworld} and
+Grounding DINO \cite{groundingdino} localise objects specified by free-text
 prompts and have been proposed as a route to annotation-free deployment and to
 automatic pre-annotation. However, their accuracy depends on the target concept
 being represented in the vision-language pre-training corpus. The behaviour of
 both on battery internals is reported in Section~\ref{sec:negative}.
 
 Benchmark design for industrial vision has precedent outside this application.
-\citet{bergmann2019mvtec} introduced MVTec AD, which established that a carefully
+Bergmann et al. introduced MVTec AD, which established that a carefully
 constructed benchmark with documented acquisition conditions can redirect an entire
-sub-field. However, MVTec AD was collected by one group under controlled conditions
+sub-field \cite{bergmann2019mvtec}. However, MVTec AD was collected by one group under controlled conditions
 and therefore does not exhibit the inter-source annotation disagreement examined
-here. \citet{zhou2022dg} surveyed domain generalisation methods and organised them
-into data manipulation, representation learning and learning strategy. However, that
+here. Zhou et al. surveyed domain generalisation methods and organised them
+into data manipulation, representation learning and learning strategy \cite{zhou2022dg}. However, that
 taxonomy presumes a fixed label space across domains, which is the assumption the
 present work shows to fail on assembled corpora.
 
@@ -309,13 +309,15 @@ an inflated score that appeared plausible on inspection. The failure is easy to
 introduce and difficult to detect, and ground-truth instance counts should be
 reconciled across pipelines as a matter of routine.
 
-\subsection{The Cross-Facility Benchmark}
+\subsection{Evaluation Sets}
 
-\noindent A cross-facility benchmark of 225 images containing 780 instances was
-drawn from all sources and held out entirely from training. A convention-
-consistent subset of 177 images, obtained by applying the screening procedure of
-Section~\ref{sec:screen}, is reported alongside the full benchmark throughout
-Section~\ref{sec:results}.
+\noindent Two evaluation sets are used and are kept distinct throughout. A
+cross-facility benchmark of 225 images containing 780 instances was drawn from all
+sources and held out entirely from training; it supports the single-source comparison
+of Section~\ref{sec:res-gap} and nothing else. The screening procedures of
+Sections~\ref{sec:screen} and \ref{sec:screen-free}, and every result that depends on
+them, operate instead on a stratified sample of 1,628 images spanning 11 sources drawn
+from the corpus itself, for the reason given in Section~\ref{sec:screen}.
 
 \section{\uppercase{Method}}
 \label{sec:method}
@@ -329,13 +331,13 @@ single-laboratory source at an input resolution of 768\,px, following the
 conventional approach in this literature and reproducing the setting under which
 published accuracy figures for this task are typically obtained.
 
-The \emph{multi-source YOLO11n} configuration \citep{yolo11} comprises 2.6\,M
-parameters and was trained from COCO initialisation \citep{lin2014coco} on all 13
+The \emph{multi-source YOLO11n} configuration \cite{yolo11} comprises 2.6\,M
+parameters and was trained from COCO initialisation \cite{lin2014coco} on all 13
 sources at 640\,px with stochastic gradient descent.
 
-The \emph{multi-source RF-DETR} configuration \citep{rfdetr} is a real-time detection
+The \emph{multi-source RF-DETR} configuration \cite{rfdetr} is a real-time detection
 transformer initialised from the published RF-DETR-Nano checkpoint, whose backbone
-derives from self-supervised DINOv2 pretraining \citep{dinov2}, fine-tuned end to end
+derives from self-supervised DINOv2 pretraining \cite{dinov2}, fine-tuned end to end
 on the same data at 672\,px. All 30.6\,M parameters are updated; the backbone is not
 frozen.
 
@@ -381,7 +383,7 @@ where $\mathbf{a}=(a_1,\dots,a_n)$ denotes the vector of per-source accuracies,
 $\operatorname{med}$ denotes the median, $\operatorname{mad}$ denotes the median
 absolute deviation, $c=1.4826$ rescales the median absolute deviation to a
 consistent estimator of the standard deviation under normality
-\citep{rousseeuw1993mad}, and $k$ denotes a sensitivity parameter. A value of
+\cite{rousseeuw1993mad}, and $k$ denotes a sensitivity parameter. A value of
 $k=3$ is used throughout, which is the conventional choice for outlier rejection
 and which is shown in Section~\ref{sec:res-screen} to separate the divergent
 source from the consensus by a wide margin on this corpus.
@@ -536,9 +538,9 @@ image is altered and no busbar annotation is touched, so any screen responding t
 manipulation responds to annotation convention and to nothing else. A detector was
 then retrained on the manipulated corpus under the identical budget.
 
-Table~\ref{tab:control} and Figure~\ref{fig:control} present the outcome. The
+Table~\ref{tab:control} presents the outcome. The
 manipulated source falls from 0.941 to 0.667 and crosses the fence, while no
-unmanipulated source moves by more than 0.050 and four move by 0.017 or less. The
+unmanipulated source moves by more than 0.050 and all but one move by 0.017 or less. The
 flagged set gains exactly one member and loses none. On the training-free index the
 same source rises from 11.1, inside the consensus band, to 185.8. Both screens
 therefore recover a divergence whose ground truth is known by construction, without
@@ -568,22 +570,11 @@ divergent & 0.097 & 0.097 & $0.000$ \\
 \end{tabular}
 \end{table}
 
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.86\textwidth]{figures/fig_control.pdf}
-\caption{Positive control on both screens. Pale bars are the original corpus, solid
-bars the corpus in which one consensus source has been relabelled to a sub-component
-convention. Dashed and dotted lines are the robust fences before and after
-manipulation. The manipulated source is the only one whose flag status changes.}
-\label{fig:control}
-\end{figure*}
-
 \subsection{Architecture Comparison under a Matched Budget}
 \label{sec:res-arch}
 
 \noindent Both multi-source configurations were trained for 60 epochs and scored per
-source under the identical protocol. Table~\ref{tab:arch} and Figure~\ref{fig:arch}
-present the comparison.
+source under the identical protocol. Table~\ref{tab:arch} presents the comparison.
 
 \begin{table}[t]
 \caption{Architecture comparison under a matched 60-epoch budget, module mAP@50.
@@ -599,15 +590,6 @@ RF-DETR & 0.955 & \textbf{0.779} & \textbf{0.337} \\
 \hline
 \end{tabular}
 \end{table}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.98\columnwidth]{figures/fig_arch.pdf}
-\caption{Architecture comparison under a matched budget. The self-supervised
-pretrained model is marginally weaker on conventionally annotated packs and
-substantially stronger on both out-of-convention sources.}
-\label{fig:arch}
-\end{figure}
 
 The result is narrow and specific. On conventionally annotated packs the
 self-supervised pretrained model is marginally \emph{worse}, at 0.955 against 0.979.
@@ -637,7 +619,7 @@ The consequence is quantified in Table~\ref{tab:inversion} and
 Figure~\ref{fig:inversion}. Evaluated across all sources, the checkpoint selected by
 validation accuracy is \emph{worse} than the final checkpoint by 0.235 mAP@50, a
 relative loss of 51\%. Across three random seeds the final checkpoint attains
-$0.696 \pm 0.003$ and the selected checkpoint $0.461 \pm 0.018$, so the effect is 80
+$0.696 \pm 0.003$ and the selected checkpoint $0.461 \pm 0.018$, so the effect is roughly 80
 times the seed-to-seed spread. On the module class, 500 bootstrap resamples give
 95\% intervals of $[0.659, 0.808]$ and $[0.471, 0.626]$, which do not overlap.
 
@@ -703,7 +685,7 @@ because it was expected to succeed and because the expectation is common in the
 surrounding literature.
 
 \textbf{Open-vocabulary detection is unusable for this task.} YOLO-World
-\citep{yoloworld}, prompted with \texttt{ev battery module} and \texttt{busbar},
+\cite{yoloworld}, prompted with \texttt{ev battery module} and \texttt{busbar},
 attained 0.004 mAP@50. Battery internals lie too far outside the vision-language
 pre-training distribution for the prompts to ground, so the annotation-free route is
 not currently available for this application.
@@ -716,14 +698,14 @@ curation dominates volume when conventions conflict.
 
 \textbf{Automatic relabelling cannot reconcile a divergent convention.} Reconciliation
 of the flagged source with the consensus convention was attempted using Grounding DINO
-\citep{groundingdino}. On clean frames the model recovered two of approximately five
+\cite{groundingdino}. On clean frames the model recovered two of approximately five
 modules, and on the greyscale macro imagery that dominates the source it produced
 boxes covering half the frame. Relabelling 1,756 images on that basis would have
 injected substantial noise. Convention conflicts are therefore not cheaply repairable
 after collection, which argues for agreeing annotation guidelines before collection.
 
 \textbf{Copy-paste and glare augmentation degrade the detector.} Copy-paste
-compositing \citep{ghiasi2021copypaste} combined with a synthetic glare pass was
+compositing \cite{ghiasi2021copypaste} combined with a synthetic glare pass was
 applied in order to address the specular highlights characteristic of battery
 internals. Validation mAP@50 declined monotonically over the first six epochs, from
 0.503 to 0.270 against a baseline of 0.818, and training was terminated. The likely
@@ -741,26 +723,28 @@ budgets across architectures.
 
 \noindent Three practical implications follow from the results presented above.
 
-Firstly, accuracy reported on a single-source benchmark should not be treated as
-an estimate of deployment accuracy for this task, and the gap is large enough to
-change engineering decisions rather than merely to qualify them. A detector
-selected on in-domain accuracy alone would have selected the specialist, which is
-the worst of the three configurations on the cross-facility benchmark.
+Firstly, when a corpus is assembled from heterogeneous sources, per-source
+disaggregated reporting is a requirement rather than an option. An aggregate figure
+computed across conventions that disagree describes no realisable deployment
+condition, and on this corpus it would average a source at 1.000 with one at 0.097.
+The proposed screening procedure makes the necessary partition explicit and
+reproducible, at the cost of a single evaluation pass over a model that is trained in
+any case, or of no training run at all in its geometry-based form.
 
-Secondly, when a corpus is assembled from heterogeneous sources, per-source
-disaggregated reporting is a requirement rather than an option. An aggregate
-figure computed across conventions that disagree describes no realisable
-deployment condition. The proposed screening procedure makes the necessary
-partition explicit and reproducible, at the cost of a single evaluation pass over
-a model that is trained in any case.
+Secondly, curation and the choice of pretraining address the same failure mode by
+different means, and they are complementary rather than alternative. Excluding the
+divergent source removes it from the aggregate entirely, whereas self-supervised
+pretraining raises accuracy on it from 0.097 to 0.337 without removing it. A divergent
+source that has not been identified is therefore still handled more gracefully by the
+pretrained model, which argues for applying both.
 
-Thirdly, the choice of backbone and the curation of the corpus address the same
-failure mode by different means, and the results indicate that curation is the
-more effective of the two. Screening recovers 0.227 module mAP@50 for YOLO11n,
-whereas substituting a self-supervised pretrained backbone recovers 0.133 of that
-same loss at substantially greater inference cost. The two are nevertheless
-complementary, since a divergent source that has not been identified is still
-handled more gracefully by the self-supervised backbone.
+Thirdly, and least expected, the same annotation disagreement that distorts reported
+accuracy also distorts model selection, and does so invisibly. A practitioner
+following the default behaviour of a standard training framework would have selected
+the checkpoint that is worse by 51\% relative, while the training logs showed
+monotonically decreasing losses throughout. Validation splits assembled from
+heterogeneous corpora therefore warrant the same per-source scrutiny as test splits,
+and the screening procedures presented here apply unchanged to them.
 
 \section{\uppercase{Limitations}}
 \label{sec:limits}
