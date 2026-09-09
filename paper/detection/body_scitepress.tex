@@ -6,11 +6,7 @@ the battery packs they carry are simultaneously a hazard and a source of critica
 raw materials. Lithium, cobalt and nickel are all classified by the European
 Commission as critical raw materials with elevated supply risk
 \cite{eccrm,harper2019}, and European recycling capacity demand is projected to
-reach 170\,GWh by 2035 \cite{te2024}. Regulation (EU) 2023/1542 additionally
-requires documented condition data across the battery lifecycle
-\cite{eubattreg}, which manual inspection delivers inconsistently.
-
-Disassembly of EoL packs nevertheless remains predominantly manual. The
+reach 170\,GWh by 2035 \cite{te2024}. Disassembly of EoL packs nevertheless remains predominantly manual. The
 operation is labour intensive, slow, and exposes workers to high voltage and to
 the risk of thermal runaway. A substantial research effort is consequently
 directed at automating it \cite{zang2024robotic,tan2025screws}.
@@ -167,24 +163,13 @@ protocol. Whether it holds on the cluttered, specular imagery of battery
 internals, and whether it holds under annotation shift specifically, is evaluated
 in Section~\ref{sec:res-arch}.
 
-\subsection{Open-Vocabulary Detection and Automatic Annotation}
+\subsection{Open-Vocabulary Detection}
 
-\noindent Open-vocabulary detectors such as YOLO-World \cite{yoloworld} and
-Grounding DINO \cite{groundingdino} localise objects specified by free-text
-prompts and have been proposed as a route to annotation-free deployment and to
-automatic pre-annotation. However, their accuracy depends on the target concept
-being represented in the vision-language pre-training corpus. The behaviour of
-both on battery internals is reported in Section~\ref{sec:negative}.
-
-Benchmark design for industrial vision has precedent outside this application.
-Bergmann et al. introduced MVTec AD, which established that a carefully
-constructed benchmark with documented acquisition conditions can redirect an entire
-sub-field \cite{bergmann2019mvtec}. However, MVTec AD was collected by one group under controlled conditions
-and therefore does not exhibit the inter-source annotation disagreement examined
-here. Zhou et al. surveyed domain generalisation methods and organised them
-into data manipulation, representation learning and learning strategy \cite{zhou2022dg}. However, that
-taxonomy presumes a fixed label space across domains, which is the assumption the
-present work shows to fail on assembled corpora.
+\noindent Open-vocabulary detectors such as YOLO-World \cite{yoloworld} and Grounding
+DINO \cite{groundingdino} localise objects from free-text prompts and have been
+proposed as a route to annotation-free deployment. However, their accuracy depends on
+the target concept appearing in the vision-language pre-training corpus; the behaviour
+of both on battery internals is reported in Section~\ref{sec:negative}.
 
 To the best of our knowledge, no public cross-facility benchmark for EV battery
 component detection exists, and no prior study has quantified the contribution of
@@ -235,15 +220,12 @@ Others (3 sources) & 725 & mixed \\
 \subsection{Deduplication and Leakage Control}
 
 \noindent Reported accuracy is informative only against a benchmark that does not
-overlap the training data. All 4,440 candidate images were therefore compared by
-difference hashing (dHash) at a Hamming distance threshold of 6. That threshold
-was selected because it separates augmentation-derived near-duplicates from
-genuinely distinct frames on this corpus; values below 4 admitted rotated
-duplicates and values above 8 rejected distinct frames of the same pack.
-
-Fifteen same-source near-duplicates were removed. A subsequent cross-source pass
-at a looser threshold returned zero duplicates, which confirms that the sources
-are genuinely independent collections rather than republications of one another.
+overlap the training data. All 4,440 candidate images were therefore compared by difference hashing (dHash) at a
+Hamming distance threshold of 6, selected because values below 4 admitted rotated
+duplicates and values above 8 rejected distinct frames of the same pack. Fifteen
+same-source near-duplicates were removed, and a cross-source pass at a looser
+threshold returned zero duplicates, confirming the sources to be genuinely independent
+collections rather than republications of one another.
 
 This control proved necessary rather than precautionary. One candidate source, a
 712-image public collection covering 19 vehicle types, republishes imagery from
@@ -280,12 +262,11 @@ Polygon annotations & 86.8\% & 16,945 of 19,522 \\
 \end{tabular}
 \end{table}
 
-Two findings changed how the corpus was treated. Firstly, the blur and greyscale
-flags are largely false alarms. The lowest-scoring images are smooth, closed pack
-lids, for which a Laplacian-variance metric reads flat metal as blurred, and the
-greyscale images originate entirely from two monochrome sources. Both categories
-add useful variation to the corpus, so deletion on the metric alone would degrade
-it.
+Two findings changed how the corpus was treated. Firstly, the blur and greyscale flags
+are largely false alarms: the lowest-scoring images are smooth closed pack lids, for
+which a Laplacian-variance metric reads flat metal as blurred, and the greyscale images
+come from two monochrome sources. Both add useful variation, so deleting on the metric
+alone would degrade the corpus.
 
 Secondly, the harmful category is unlabelled images that nonetheless contain
 visible components. A proportion of the 23.5\% is legitimate background imagery,
@@ -383,10 +364,9 @@ $k=3$ is used throughout, which is the conventional choice for outlier rejection
 and which is shown in Section~\ref{sec:res-screen} to separate the divergent
 source from the consensus by a wide margin on this corpus.
 
-The median and the median absolute deviation are used in place of the mean and
-the standard deviation because a divergent source inflates both of the latter and
-thereby partially masks itself. Consequently, the proposed procedure remains
-sensitive when the divergent source is large, which is the case on this corpus.
+The median and median absolute deviation replace the mean and standard deviation
+because a divergent source inflates both of the latter and thereby partially masks
+itself, so the procedure stays sensitive when that source is large.
 
 Two practical conditions apply. Firstly, a source must contribute enough instances
 for its accuracy to be estimated stably; a floor of 100 module instances is used
@@ -483,9 +463,21 @@ one of them by a wide margin.}
 \end{figure}
 
 The two flagged sources differ in character. The source at 0.097 lies 0.767 below the
-fence, an order of magnitude below the consensus band. Visual inspection confirms the
-diagnosis: it annotates small internal sub-components in extreme macro views as
-modules, whereas every other source annotates pack-level modules. The detector learned
+fence, an order of magnitude below the consensus band. Figure~\ref{fig:examples}
+shows the diagnosis directly: it annotates small internal sub-components as modules,
+whereas every other source annotates pack-level modules.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/fig_convention_examples.pdf}
+\caption{Two frames from the flagged source with their released annotations. Twelve
+boxes in each carry the label \texttt{module}, every one covering a small internal
+sub-component; the pack-level modules that every other source annotates are left
+unmarked. Median normalised module scale is 0.114 and 0.077 respectively, against 0.14
+for this source overall and 0.17 to 0.54 across the consensus sources.}
+\label{fig:examples}
+\end{figure}
+ The detector learned
 the majority convention and applied it consistently, so the collapse constitutes a
 disagreement about the target rather than a failure of perception. The source at
 0.641 lies 0.223 below the fence and is a milder case; its granularity index in
@@ -571,7 +563,16 @@ divergent & 0.097 & 0.097 & $0.000$ \\
 \label{sec:res-arch}
 
 \noindent Both multi-source configurations were trained for 60 epochs and scored per
-source under the identical protocol. Table~\ref{tab:arch} presents the comparison.
+source under the identical protocol. Table~\ref{tab:arch} and Figure~\ref{fig:arch} present the comparison.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/fig_arch.pdf}
+\caption{Architecture comparison under a matched budget. The self-supervised
+pretrained model is marginally weaker on conventionally annotated packs and
+substantially stronger on both out-of-convention sources.}
+\label{fig:arch}
+\end{figure}
 
 \begin{table}[t]
 \caption{Architecture comparison under a matched 60-epoch budget, module mAP@50.
