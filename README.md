@@ -21,8 +21,8 @@ DOI: [10.11159/mvml26.125](https://doi.org/10.11159/mvml26.125)
 > The single-facility two-stage pipeline. Most of this repository's Stage 1 / Stage 2
 > code and the "Key results" table below correspond to this paper.
 
-**[2] Annotation Convention, Not Architecture, Limits Cross-Facility Detection of
-Electric Vehicle Battery Components** — *in preparation*
+**[2] Screening Multi-Source Corpora for Annotation Divergence: A Cross-Facility
+Benchmark for EV Battery Component Detection** — *in preparation*
 S. A. Katiyar, K. Kosimov. Source: [`paper/detection/`](paper/detection/)
 
 > Extends [1] to cross-facility evaluation across 13 public sources. Introduces a
