@@ -96,9 +96,9 @@ and evaluates detectors on it under a single harmonised protocol.
 
 The principal finding is that the dominant failure mode is not image difficulty
 and not model capacity. It is disagreement between sources about what the target
-class denotes. Per-source module accuracy spans 1.000 to 0.097, and inspection
-confirms that the collapsing source annotates small internal sub-components as
-modules while every other source annotates pack-level modules. The detector
+class denotes. Per-source module accuracy spans 1.000 to 0.097, and the collapsing
+source annotates at a systematically finer granularity than the rest, its median
+module box measuring roughly 60\% the linear size of those in the other sources. The detector
 learned the majority convention and applied it consistently; the collapse is a
 disagreement about the target, not a failure of perception.
 
@@ -405,9 +405,11 @@ $k=3$. Two sources fall below it, one by an order of magnitude.}
 \end{figure}
 
 The two differ in character. The source at 0.097 lies 0.767 below the fence.
-Inspection confirms the diagnosis: it annotates small internal sub-components in
-extreme macro views as modules, whereas every other source annotates pack-level
-modules. The detector learned the majority convention and applied it consistently, so
+The cause is a systematic difference in annotation granularity: the flagged source
+annotates modules at a median normalised scale of 0.142 against 0.232 across the other
+sources, with 77\% of its boxes below 0.20 against 41\% elsewhere. The distributions
+overlap and many of its frames are annotated conventionally, so the divergence is a
+shift in distribution rather than a categorical difference. The detector learned the majority convention and applied it consistently, so
 the collapse is a disagreement about the target, not a failure of perception. The
 source at 0.641 is a milder case whose granularity index is the second highest in the
 corpus but does not exceed the training-free fence, so the two screens disagree about

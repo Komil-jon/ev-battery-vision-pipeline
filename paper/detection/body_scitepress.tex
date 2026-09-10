@@ -33,11 +33,22 @@ harmonised protocol.
 The principal finding is that the dominant failure mode in this setting is
 neither image difficulty nor model capacity. It is disagreement between sources
 about what the target class denotes. Per-source module accuracy spans
-1.000 to 0.097, and inspection confirms that the source on which accuracy collapses
-annotates small internal sub-components as modules while every other source annotates
-pack-level modules. The detector learned the majority
-convention and applied it consistently, so the collapse constitutes a
+1.000 to 0.097, and the source on which accuracy collapses annotates at a
+systematically finer granularity than the rest, with a median module box roughly 60\% the
+linear size of those in the other sources. The detector learned the
+majority convention and applied it consistently, so the collapse constitutes a
 disagreement about the target rather than a failure of perception.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.96\columnwidth]{figures/fig_overview.pdf}
+\caption{Overview of the two screening procedures. Both take a corpus assembled from
+independent sources and return the sources whose annotation convention diverges from
+the majority. The model-based screen scores each source with a detector trained on the
+merged corpus; the training-free screen reads the annotation files alone and needs no
+training run.}
+\label{fig:overview}
+\end{figure}
 
 This observation is developed into a screening procedure. The contributions of
 this paper are as follows:
@@ -76,25 +87,21 @@ fine-tuning of a pretrained model, each of which constrains the design space.
 
 \subsection{Perception for Battery Disassembly}
 
-\noindent Zang et al. surveyed robotic EV battery
-disassembly and concluded that the process remains predominantly manual, with
-perception and task uncertainty identified as the principal obstacles \cite{zang2024robotic}. Wegener et al. demonstrated that pack designs vary sufficiently
-between manufacturers that fixed automation does not transfer, which is the
-practical reason perception must generalise \cite{wegener2015}. However, that study addressed
-mechanical disassembly sequencing and did not evaluate a perception component.
+\noindent Zang et al. surveyed robotic EV battery disassembly and identified
+perception and task uncertainty as the principal obstacles to a process that remains
+predominantly manual \cite{zang2024robotic}. Wegener et al. showed that pack designs vary enough
+between manufacturers that fixed automation does not transfer, which is the practical
+reason perception must generalise \cite{wegener2015}. However, that study addressed disassembly
+sequencing and evaluated no perception component.
 
 Most published perception work for this application targets fasteners rather than
-components. Li et al. proposed a screw detection method
-combining Faster R-CNN with rotation edge similarity, reporting improved
-localisation of the screw axis \cite{screwrcnn2021}. However, the method was validated on a single
-collection of laboratory imagery. Li et al. developed a
-YOLOX-family detector for active screw detection in EV battery disassembly using
-1,719 hand-annotated images \cite{screwbatt2023}. However, the dataset was not released and accuracy
-was reported only in domain. Naseri et al.
-presented a comparison of YOLOv11 against Faster R-CNN for the same task, and
-observed that the field is hampered by a lack of public datasets; the study
-resorts to laptop screws as a proxy domain, which limits the conclusions that
-transfer to battery imagery \cite{screwcompare2026}.
+components. Li et al. combined Faster R-CNN with rotation edge similarity for screw detection but
+validated it on a single collection of laboratory imagery \cite{screwrcnn2021}. Li et al. developed
+a YOLOX-family detector using 1,719 hand-annotated images, which were not released, and
+reported accuracy only in domain \cite{screwbatt2023}. Naseri et al. compared YOLOv11 against Faster
+R-CNN and observed that the field is hampered by a lack of public datasets; that study
+resorts to laptop screws as a proxy domain, which limits what transfers to battery
+imagery \cite{screwcompare2026}.
 
 Module-level and busbar-level perception is comparatively under-explored. Tan et al. developed a collaborative robot that unfastens and
 collects screws by fusing vision with force and torque sensing, reporting above
@@ -131,26 +138,20 @@ distinction is consequential for merged corpora: noise averages out with scale
 whereas a divergent convention does not, and the proposed screening procedure
 operationalises exactly that distinction.
 
-Penquitt et al. developed Rechecked, a modular framework combining automatic
-label-error detection with crowd-sourced verification, and applied it to the
-pedestrian class of KITTI, in which 18\% of the original ground-truth labels were
-found to be missing or inaccurate \cite{penquitt2026}. However, the framework corrects errors relative
-to an annotation standard that is agreed within a single dataset, and the authors
-report that the best available detection methods still miss up to 66\% of label
-errors. The failure characterised in the present work is of a different kind: the
-sources do not disagree about individual boxes, they disagree about what the class
-denotes, and consequently no correction procedure operating within a single
-convention can reconcile them. Section~\ref{sec:negative} reports an attempt at
-exactly such a reconciliation, and its failure.
+Penquitt et al. developed Rechecked, which combines automatic label-error detection
+with crowd-sourced verification, and found 18\% of the KITTI pedestrian ground truth
+missing or inaccurate \cite{penquitt2026}. However, it corrects errors relative to a standard agreed
+within one dataset. The failure characterised here is different: the sources do not
+disagree about individual boxes, they disagree about what the class denotes, so no
+correction operating within a single convention can reconcile them.
+Section~\ref{sec:negative} reports an attempt at exactly that, and its failure.
 
-Abou Akar et al. investigated multi-source training for industrial object
-detection, combining real imagery with rendered and generatively synthesised data,
-and demonstrated that the composition of the training mixture materially affects
-generalisation \cite{abouakar2026}. However, the sources compared in that study share a single
-annotation standard by construction, because the synthetic data is generated with
-ground truth attached. The corpus considered here is multi-source in a stricter
-sense, in that each contributing source carries an independently authored
-annotation standard.
+Abou Akar et al. trained industrial detectors on real, rendered and generatively
+synthesised data, and showed that the composition of the mixture materially affects
+generalisation \cite{abouakar2026}. However, those sources share one annotation standard by
+construction, since synthetic data carries its ground truth. The corpus here is
+multi-source in a stricter sense: each source carries an independently authored
+standard.
 
 \subsection{Self-Supervised Representations for Detection}
 
@@ -170,6 +171,13 @@ DINO \cite{groundingdino} localise objects from free-text prompts and have been
 proposed as a route to annotation-free deployment. However, their accuracy depends on
 the target concept appearing in the vision-language pre-training corpus; the behaviour
 of both on battery internals is reported in Section~\ref{sec:negative}.
+
+Benchmark design for industrial vision has precedent. Bergmann et al. introduced
+MVTec AD, showing that a carefully constructed benchmark can redirect a sub-field,
+though it was collected by one group under controlled conditions and exhibits no
+inter-source annotation disagreement \cite{bergmann2019mvtec}. Zhou et al. surveyed domain
+generalisation, but that taxonomy presumes a fixed label space across domains, which is
+the assumption shown here to fail on assembled corpora \cite{zhou2022dg}.
 
 To the best of our knowledge, no public cross-facility benchmark for EV battery
 component detection exists, and no prior study has quantified the contribution of
@@ -206,12 +214,10 @@ ev-battery-comp-det. & 1,045 & multi-manuf. \\
 ev-battery-components & 680 & Audi/BMW/Chevy \\
 last\_exp4 & 483 & multi-manuf. \\
 ev-battery-pack & 435 & single lab rig \\
-battery\_comp & 280 & Nissan Leaf \\
-ue\_d1\_defect & 237 & module close-ups \\
+battery\_comp, ue\_d1 & 517 & Nissan Leaf, close-ups \\
 final\_mobilenet & 216 & multi-manuf. \\
 automated-disassem. & 117 & disassembly cell \\
-bmw\_i3 & 111 & BMW i3 \\
-ue\_rav4 & 96 & Toyota RAV4 \\
+bmw\_i3, ue\_rav4 & 207 & BMW i3, Toyota RAV4 \\
 Others (3 sources) & 725 & mixed \\
 \hline
 \end{tabular}
@@ -276,14 +282,23 @@ no annotations at all. Such frames actively teach the detector that busbars are
 background, and they are a plausible contributor to the weak busbar accuracy
 reported in Section~\ref{sec:res-arch}.
 
-The audit also established that 16,945 of the 19,522 annotations are polygon
-masks, with between 5 and 151 vertices, rather than axis-aligned boxes. These are
-converted to enclosing boxes for detection training and evaluation. It should be
-noted that an early version of the evaluation pipeline silently discarded every
-polygon-format label, trained on 20\% of the available annotations, and produced
-an inflated score that appeared plausible on inspection. The failure is easy to
-introduce and difficult to detect, and ground-truth instance counts should be
-reconciled across pipelines as a matter of routine.
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\columnwidth]{figures/fig_scaledist.pdf}
+\caption{Distribution of normalised module box scale for the flagged source against
+all other sources. Dashed lines mark the medians. The flagged source annotates at a
+systematically finer granularity, though the two distributions overlap and a
+substantial share of its boxes falls inside the range of the others.}
+\label{fig:scaledist}
+\end{figure}
+
+The audit also established that 16,945 of the 19,522 annotations are polygon masks with
+between 5 and 151 vertices rather than axis-aligned boxes. These are converted to
+enclosing boxes for training and evaluation. It should be noted that an early version
+of the evaluation pipeline silently discarded every polygon-format label, trained on
+20\% of the annotations, and produced an inflated score that appeared plausible.
+Ground-truth instance counts should be reconciled across pipelines as a matter of
+routine.
 
 \subsection{Evaluation Sets}
 
@@ -365,8 +380,7 @@ and which is shown in Section~\ref{sec:res-screen} to separate the divergent
 source from the consensus by a wide margin on this corpus.
 
 The median and median absolute deviation replace the mean and standard deviation
-because a divergent source inflates both of the latter and thereby partially masks
-itself, so the procedure stays sensitive when that source is large.
+because a divergent source inflates both of the latter and thereby masks itself.
 
 Two practical conditions apply. Firstly, a source must contribute enough instances
 for its accuracy to be estimated stably; a floor of 100 module instances is used
@@ -463,19 +477,23 @@ one of them by a wide margin.}
 \end{figure}
 
 The two flagged sources differ in character. The source at 0.097 lies 0.767 below the
-fence, an order of magnitude below the consensus band. Figure~\ref{fig:examples}
-shows the diagnosis directly: it annotates small internal sub-components as modules,
-whereas every other source annotates pack-level modules.
+fence. The cause is a systematic
+difference in annotation granularity rather than image difficulty, as
+Figure~\ref{fig:scaledist} shows: the flagged source annotates modules at a median
+normalised scale of 0.142 against 0.232 across the other sources, with 77\% of its
+boxes below 0.20 against 41\% elsewhere. It should be stated plainly that the two
+distributions overlap and that many frames in the flagged source are annotated
+conventionally, so the divergence is a shift in distribution rather than a categorical
+difference. Figure~\ref{fig:examples} shows both ends of that shift within one source.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.98\columnwidth]{figures/fig_convention_examples.pdf}
-\caption{Two frames from the flagged source with their released annotations. The
-source annotates busbars separately and correctly (yellow), so the boxes it labels
-\texttt{module} (red) are not mislabelled busbars: they mark small internal
-sub-components, while the pack-level modules that every other source annotates are
-left unmarked. Median normalised module scale is 0.218 and 0.169 here, against 0.14
-for this source overall and 0.17 to 0.54 across the consensus sources.}
+\includegraphics[width=0.88\columnwidth]{figures/fig_convention_examples.pdf}
+\caption{Two frames from the flagged source with their released annotations,
+illustrating the range of granularity within a single source. The left frame marks
+eleven small internal components as modules; the right marks the six pack-level module
+stacks, which is the convention every other source follows. Busbars are annotated
+separately in both, so the finer boxes are not mislabelled busbars.}
 \label{fig:examples}
 \end{figure}
  The detector learned
@@ -487,9 +505,9 @@ exceed the training-free fence, so the two screens disagree about it. That
 disagreement is informative, and indicates the model-based screen to be the more
 sensitive of the two.
 
-Three sources were excluded for contributing fewer than 100 module instances. One of
-these annotates busbars exclusively and contributes no module instances at all, a
-fact the screen surfaces without any manual inspection.
+Three sources were excluded for contributing fewer than 100 module instances; one of
+them annotates busbars exclusively and contributes none, which the screen surfaces
+without manual inspection.
 
 \subsection{Training-Free Screening}
 \label{sec:res-screen-free}
@@ -508,11 +526,9 @@ independent line of evidence that the source encodes a different annotation
 convention rather than presenting harder imagery.
 
 The practical implication is that a corpus may be screened before a detector is
-trained. It should be noted that the training-free index detects divergence in
-annotation \emph{granularity} specifically, which is the form present in this corpus.
-Conventions that disagree about class boundaries while preserving object scale, for
-example a source that labels a cooling plate as a module, would not be separated by
-Equation~\ref{eq:granularity} and would still require the model-based procedure.
+trained. It should be noted that the index detects divergence in annotation \emph{granularity}
+specifically. Conventions disagreeing about class boundaries while preserving object
+scale would still require the model-based procedure.
 
 \subsection{Positive Control}
 \label{sec:res-control}
@@ -664,19 +680,14 @@ splits.
 
 \subsection{Deployment Cost and Zero-Shot Transfer}
 
-\noindent Evaluated on 17 pack families absent from the corpus, drawn from an
-unlabelled public collection, the merged-corpus detector attains a mean detection rate
-of 0.76 and finds busbars in 16 of the 17, with 1.00 on BMW i4 and Hyundai Ioniq
-against 0.27 on a Volvo truck pack. Module geometry therefore transfers to unseen
-passenger-vehicle packs, whereas unusual form factors remain the weak axis. It should
-be noted that a detection-rate proxy measures recall only and cannot detect false
-positives.
-
-Dynamic INT8 quantisation to the ONNX format reduced median CPU latency from
-56.3\,ms to 44.8\,ms and file size from 6.3\,MB to 3.4\,MB, for a loss of 0.007
-mAP@50, measured as the median over 20 images on an Apple M1 processor with no
-graphics acceleration. The detector is therefore deployable without a graphics
-processor at approximately 22 frames per second.
+\noindent On 17 pack families absent from the corpus, drawn from an unlabelled public
+collection, the merged-corpus detector attains a mean detection rate of 0.76 and finds
+busbars in 16 of the 17, with 1.00 on BMW i4 and Hyundai Ioniq against 0.27 on a Volvo
+truck pack, so module geometry transfers to unseen passenger-vehicle packs while
+unusual form factors remain the weak axis. Dynamic INT8 quantisation to ONNX reduced
+median CPU latency from 56.3\,ms to 44.8\,ms and file size from 6.3\,MB to 3.4\,MB for a
+loss of 0.007 mAP@50, measured over 20 images on an Apple M1 processor, giving roughly
+22 frames per second without a graphics processor.
 
 \subsection{Negative Results}
 \label{sec:negative}
@@ -722,7 +733,7 @@ budgets across architectures.
 
 \section{\uppercase{Discussion}}
 
-\noindent Three practical implications follow from the results presented above.
+\noindent Two practical implications follow from the results presented above.
 
 Firstly, when a corpus is assembled from heterogeneous sources, per-source
 disaggregated reporting is a requirement rather than an option. An aggregate figure
@@ -732,14 +743,7 @@ The proposed screening procedure makes the necessary partition explicit and
 reproducible, at the cost of a single evaluation pass over a model that is trained in
 any case, or of no training run at all in its geometry-based form.
 
-Secondly, curation and the choice of pretraining address the same failure mode by
-different means, and they are complementary rather than alternative. Excluding the
-divergent source removes it from the aggregate entirely, whereas self-supervised
-pretraining raises accuracy on it from 0.097 to 0.337 without removing it. A divergent
-source that has not been identified is therefore still handled more gracefully by the
-pretrained model, which argues for applying both.
-
-Thirdly, and least expected, the same annotation disagreement that distorts reported
+Secondly, and least expected, the same annotation disagreement that distorts reported
 accuracy also distorts model selection, and does so invisibly. A practitioner
 following the default behaviour of a standard training framework would have selected
 the checkpoint that is worse by 51\% relative, while the training logs showed
